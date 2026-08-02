@@ -102,6 +102,15 @@ def verCode = npmPackageJson["versionCode"]
 def verName = npmPackageJson["displayVersion"] ?: npmPackageJson["version"]
 def applicationName = npmPackageJson["name"]
 
+// The React Native bundle embeds package.json version data. Track it explicitly
+// so a version-only release cannot reuse an earlier Hermes bundle.
+tasks.configureEach { task ->
+    if (task.name == "createBundleReleaseJsAndAssets") {
+        task.inputs.file(new File(rootProject.projectDir.parentFile, "package.json"))
+                .withPropertyName("appPackageJson")
+    }
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
