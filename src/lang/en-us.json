@@ -323,6 +323,7 @@
   "setting_basic_source_update_failed": "Update failed; using the local cache",
   "setting_basic_source_update_success": "Source updated",
   "setting_basic_source_update_version": "Current version",
+  "setting_basic_source_user_api_btn": "Music Source Management",
   "setting_basic_sourcename": "Music Streaming Service Name",
   "setting_basic_sourcename_alias": "Alias",
   "setting_basic_sourcename_real": "Original",

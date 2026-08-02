@@ -323,6 +323,7 @@
   "setting_basic_source_update_failed": "音源更新失敗，繼續使用本機快取",
   "setting_basic_source_update_success": "音源更新成功",
   "setting_basic_source_update_version": "目前版本",
+  "setting_basic_source_user_api_btn": "音源管理",
   "setting_basic_sourcename": "音樂串流平台名稱",
   "setting_basic_sourcename_alias": "別名",
   "setting_basic_sourcename_real": "原名",
