@@ -1,4 +1,4 @@
-import { initSetting, showPactModal } from '@/core/common'
+import { initSetting } from '@/core/common'
 import registerPlaybackService from '@/plugins/player/service'
 import initTheme from './theme'
 import initI18n from './i18n'
@@ -10,23 +10,17 @@ import initCommonState from './common'
 import { initDeeplink } from './deeplink'
 import { setApiSource } from '@/core/apiSource'
 import commonActions from '@/store/common/action'
-import settingState from '@/store/setting/state'
 import { checkUpdate } from '@/core/version'
 import { bootLog } from '@/utils/bootLog'
-import { cheatTip } from '@/utils/tools'
+import { getCurrentSession } from '@/features/auth/authState'
+import { startMusicCloudSync } from '@/features/musicSync'
 
 let isFirstPush = true
 const handlePushedHomeScreen = async() => {
-  await cheatTip()
-  if (settingState.setting['common.isAgreePact']) {
-    if (isFirstPush) {
-      isFirstPush = false
-      void checkUpdate()
-      void initDeeplink()
-    }
-  } else {
-    if (isFirstPush) isFirstPush = false
-    showPactModal()
+  if (isFirstPush) {
+    isFirstPush = false
+    void checkUpdate()
+    void initDeeplink()
   }
 }
 
@@ -48,7 +42,7 @@ export default async() => {
   await initUserApi(setting)
   bootLog('User Api inited.')
 
-  setApiSource(setting['common.apiSource'])
+  void setApiSource(setting['common.apiSource'])
   bootLog('Api inited.')
 
   registerPlaybackService()
@@ -57,6 +51,8 @@ export default async() => {
   bootLog('Player inited.')
   await dataInit(setting)
   bootLog('Data inited.')
+  const authSession = getCurrentSession()
+  if (authSession) void startMusicCloudSync(authSession)
   await initCommonState(setting)
   bootLog('Common State inited.')
 

@@ -6,6 +6,8 @@ import {
   PLAY_DETAIL_SCREEN,
   SONGLIST_DETAIL_SCREEN,
   COMMENT_SCREEN,
+  AUTH_SCREEN,
+  ACCOUNT_CHANGE_PASSWORD_SCREEN,
   // SETTING_SCREEN,
 } from './screenNames'
 
@@ -14,6 +16,71 @@ import { NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
 import { getStatusBarStyle } from './utils'
 import { windowSizeTools } from '@/utils/windowSizeTools'
 import { type ListInfoItem } from '@/store/songlist/state'
+import { type AuthScreenMode } from '@/screens/Auth'
+
+export const pushAuthScreen = async(onAuthenticated: () => void | Promise<void>, initialMode: AuthScreenMode = 'login') => {
+  const theme = themeState.theme
+  await Navigation.setRoot({
+    root: {
+      stack: {
+        children: [{
+          component: {
+            name: AUTH_SCREEN,
+            passProps: {
+              initialMode,
+              onAuthenticated,
+            },
+            options: {
+              topBar: {
+                visible: false,
+                height: 0,
+              },
+              statusBar: {
+                drawBehind: false,
+                visible: true,
+                style: getStatusBarStyle(theme.isDark),
+                backgroundColor: theme['c-content-background'],
+              },
+              navigationBar: {
+                backgroundColor: theme['c-content-background'],
+              },
+              layout: {
+                componentBackgroundColor: theme['c-content-background'],
+              },
+            },
+          },
+        }],
+      },
+    },
+  })
+}
+
+export const pushAccountChangePasswordScreen = async(componentId: string) => {
+  const theme = themeState.theme
+  await Navigation.push(componentId, {
+    component: {
+      name: ACCOUNT_CHANGE_PASSWORD_SCREEN,
+      options: {
+        topBar: {
+          visible: false,
+          height: 0,
+        },
+        statusBar: {
+          drawBehind: false,
+          visible: true,
+          style: getStatusBarStyle(theme.isDark),
+          backgroundColor: theme['c-content-background'],
+        },
+        navigationBar: {
+          backgroundColor: theme['c-content-background'],
+        },
+        layout: {
+          componentBackgroundColor: theme['c-content-background'],
+        },
+      },
+    },
+  })
+}
 
 // const store = getStore()
 // const getTheme = () => getter('common', 'theme')(store.getState())

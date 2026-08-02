@@ -91,7 +91,7 @@ export const initSetting = async() => {
       } catch (err: any) {
         void tipDialog({
           title: '数据迁移失败 (Failed to migrate data)',
-          message: `请截图并在 GitHub 反馈。为了防止数据丢失，应用将停止运行。错误信息：\n${(err.stack ?? err.message) as string}`,
+          message: `请联系管理员反馈，并附上“设置-错误日志”内容。为了防止数据丢失，应用将停止运行。错误信息：\n${(err.stack ?? err.message) as string}`,
           btnText: 'Exit',
           bgClose: false,
         }).then(() => {
