@@ -7,6 +7,7 @@ import { exitApp } from './utils/nativeModules/utils'
 import { windowSizeTools } from './utils/windowSizeTools'
 import { listenLaunchEvent } from './navigation/regLaunchedEvent'
 import { tipDialog } from './utils/tools'
+import { restoreSession } from '@/features/auth/authState'
 
 console.log('starting app...')
 listenLaunchEvent()
@@ -47,10 +48,9 @@ void Promise.all([getFontSize(), windowSizeTools.init()]).then(async([fontSize])
   }
   const { init: initNavigation, navigations } = await import('@/navigation')
 
-  initNavigation(async() => {
+  const continueToApp = async() => {
     await handleInit()
     if (!isInited) return
-    // import('@/utils/nativeModules/cryptoTest')
 
     await navigations.pushHomeScreen().then(() => {
       void handlePushedHomeScreen()
@@ -64,6 +64,15 @@ void Promise.all([getFontSize(), windowSizeTools.init()]).then(async([fontSize])
         exitApp()
       })
     })
+  }
+
+  await initNavigation(async() => {
+    const authState = await restoreSession()
+    if (authState === 'authenticated') {
+      await continueToApp()
+      return
+    }
+    await navigations.pushAuthScreen(continueToApp, authState === 'email_binding' ? 'bind' : 'login')
   })
 }).catch((err) => {
   void tipDialog({

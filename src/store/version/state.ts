@@ -7,6 +7,7 @@ export interface ProgressInfo {
 
 export interface VersionInfo {
   version: string
+  displayVersion?: string
   desc: string
   history?: LX.VersionInfo[]
 }

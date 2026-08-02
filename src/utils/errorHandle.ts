@@ -5,26 +5,16 @@ import { log } from '@/utils/log'
 import { toast } from './tools'
 
 const errorHandler = (e: Error, isFatal: boolean) => {
-  const excludedErrors = [
-    'Failed to construct \'Response\'',
-  ]
   if (isFatal) {
-    if (excludedErrors.some((excludedError) => e.message.includes(excludedError))) {
-      toast('应用遇到了错误，如果你有固定的复现方式，请截图并在 GitHub 反馈（并附上具体的操作步骤，以及“设置-错误日志”的内容）')
+    const message = `应用运行出现异常，请联系管理员反馈。请附上刚才的操作步骤和“设置-错误日志”内容。\n\n错误：${e.name} ${e.message}`
+    if (e.message.includes('Failed to construct \'Response\'')) {
+      toast('应用运行出现异常，请联系管理员反馈。')
     } else {
       Alert.alert(
-        '💥Unexpected error occurred💥',
-        `
-  应用出 bug 了😭，以下是错误异常信息。请截图并在 GitHub 反馈（并附上刚才你进行了什么操作，以及附上“设置-错误日志”的内容）。现在应用可能会出现异常，若出现异常请尝试强制结束应用后重新启动！
-
-  Error:
-  ${isFatal ? 'Fatal:' : ''} ${e.name} ${e.message}
-  `,
+        '应用发生错误',
+        message,
         [{
-          text: '关闭 (Close)',
-          onPress: () => {
-            // exitApp()
-          },
+          text: '关闭',
         }],
       )
     }

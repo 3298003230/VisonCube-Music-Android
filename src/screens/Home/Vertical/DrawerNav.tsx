@@ -12,6 +12,7 @@ import type { InitState } from '@/store/common/state'
 import { exitApp, setNavActiveId } from '@/core/common'
 import Text from '@/components/common/Text'
 import { useSettingValue } from '@/store/setting/hook'
+import { getCurrentUser } from '@/features/auth/authState'
 
 const styles = createStyle({
   container: {
@@ -29,7 +30,7 @@ const styles = createStyle({
   },
   headerText: {
     textAlign: 'center',
-    marginLeft: 16,
+    marginLeft: 0,
   },
   menus: {
     flex: 1,
@@ -55,6 +56,36 @@ const styles = createStyle({
     paddingLeft: 20,
     // fontWeight: '500',
   },
+  accountShortcut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 12,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  accountAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountBody: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 11,
+  },
+  accountName: {
+    fontWeight: '700',
+  },
+  accountEmail: {
+    marginTop: 3,
+  },
+  accountArrow: {
+    marginLeft: 8,
+  },
 })
 
 const Header = () => {
@@ -63,7 +94,6 @@ const Header = () => {
   return (
     <View style={{ paddingTop: statusBarHeight, backgroundColor: theme['c-primary-light-700-alpha-500'] }}>
       <View style={styles.header}>
-        <Icon name="logo" color={theme['c-primary-dark-100-alpha-300']} size={28} />
         <Text style={styles.headerText} size={28} color={theme['c-primary-dark-100-alpha-300']}>VisonCube Music</Text>
       </View>
     </View>
@@ -96,11 +126,40 @@ const MenuItem = ({ id, icon, onPress }: {
       </TouchableOpacity>
 }
 
+const AccountShortcut = ({ onPress }: { onPress: () => void }) => {
+  const theme = useTheme()
+  const t = useI18n()
+  const user = getCurrentUser()
+  if (!user) return null
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={{ ...styles.accountShortcut, backgroundColor: theme['c-primary-light-1000-alpha-700'], borderColor: theme['c-border-background'] }}
+    >
+      <View style={{ ...styles.accountAvatar, backgroundColor: theme['c-primary'] }}>
+        <Text size={18} color={theme['c-primary-light-1000']} style={{ fontWeight: '800' }}>V</Text>
+      </View>
+      <View style={styles.accountBody}>
+        <Text size={15} numberOfLines={1} style={styles.accountName}>{user.username}</Text>
+        <Text size={12} numberOfLines={1} color={theme['c-font-label']} style={styles.accountEmail}>{user.email ?? t('account_no_email')}</Text>
+      </View>
+      <Icon name="chevron-right" size={13} color={theme['c-font-label']} style={styles.accountArrow} />
+    </TouchableOpacity>
+  )
+}
+
 export default memo(() => {
   const theme = useTheme()
   // console.log('render drawer nav')
   const showBackBtn = useSettingValue('common.showBackBtn')
   const showExitBtn = useSettingValue('common.showExitBtn')
+
+  const openAccount = () => {
+    global.lx.settingActiveId = 'account'
+    global.app_event.changeMenuVisible(false)
+    setNavActiveId('nav_setting')
+  }
 
   const handlePress = (id: IdType) => {
     switch (id) {
@@ -126,6 +185,7 @@ export default memo(() => {
   return (
     <View style={{ ...styles.container, backgroundColor: theme['c-content-background'] }}>
       <Header />
+      <AccountShortcut onPress={openAccount} />
       <ScrollView style={styles.menus}>
         <View style={styles.list}>
           {NAV_MENUS.map(menu => <MenuItem key={menu.id} id={menu.id} icon={menu.icon} onPress={handlePress} />)}

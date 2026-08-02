@@ -10,8 +10,8 @@ import { useI18n } from '@/lang'
 import { useVersionDownloadProgressUpdated, useVersionInfo } from '@/store/version/hook'
 import Text from '@/components/common/Text'
 import { showModal } from '@/core/version'
+import { APP_DISPLAY_VERSION } from '@/config/version'
 
-const currentVer = process.versions.app
 export default memo(() => {
   const t = useI18n()
   const versionInfo = useVersionInfo()
@@ -67,8 +67,8 @@ export default memo(() => {
     <Section title={t('setting_version')}>
       <SubTitle title={title}>
         <View style={styles.desc}>
-          <Text size={14}>{t('version_label_latest_ver')}{versionInfo.newVersion?.version}</Text>
-          <Text size={14}>{t('version_label_current_ver')}{currentVer}</Text>
+          {!versionInfo.isUnknown ? <Text size={14}>{t('version_label_latest_ver')}{versionInfo.newVersion?.displayVersion ?? versionInfo.newVersion?.version}</Text> : null}
+          <Text size={14}>{t('version_label_current_ver')}{APP_DISPLAY_VERSION}</Text>
           {
             tip ? <Text size={14}>{tip}</Text> : null
           }

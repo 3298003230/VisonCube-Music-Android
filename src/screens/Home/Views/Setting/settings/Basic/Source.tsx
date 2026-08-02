@@ -11,10 +11,9 @@ import apiSourceInfo from '@/utils/musicSdk/api-source-info'
 import { useSettingValue } from '@/store/setting/hook'
 import { useStatus, useUserApiList } from '@/store/userApi'
 import Button from '../../components/Button'
-import UserApiEditModal, { type UserApiEditModalType } from './UserApiEditModal'
 import Text from '@/components/common/Text'
 import { useTheme } from '@/store/theme/hook'
-// import { importUserApi, removeUserApi } from '@/core/userApi'
+import UserApiEditModal, { type UserApiEditModalType } from './UserApiEditModal'
 
 const apiSourceList = apiSourceInfo.map(api => ({
   id: api.id,
@@ -23,9 +22,8 @@ const apiSourceList = apiSourceInfo.map(api => ({
 }))
 
 const useActive = (id: string) => {
-  const activeLangId = useSettingValue('common.apiSource')
-  const isActive = useMemo(() => activeLangId == id, [activeLangId, id])
-  return isActive
+  const activeSourceId = useSettingValue('common.apiSource')
+  return useMemo(() => activeSourceId == id, [activeSourceId, id])
 }
 
 const Item = ({ id, name, desc, statusLabel, change }: {
@@ -37,7 +35,7 @@ const Item = ({ id, name, desc, statusLabel, change }: {
 }) => {
   const isActive = useActive(id)
   const theme = useTheme()
-  // const [toggleCheckBox, setToggleCheckBox] = useState(false)
+
   return (
     <CheckBox marginBottom={5} check={isActive} onChange={() => { change(id) }} need>
       <Text style={styles.sourceLabel}>
@@ -55,37 +53,31 @@ const Item = ({ id, name, desc, statusLabel, change }: {
 
 export default memo(() => {
   const t = useI18n()
-  const list = useMemo(() => apiSourceList.map(s => ({
+  const list = useMemo(() => apiSourceList.map(source => ({
     // @ts-expect-error
-    name: t(`setting_basic_source_${s.id}`) || s.name,
-    id: s.id,
+    name: t(`setting_basic_source_${source.id}`) || source.name,
+    id: source.id,
   })), [t])
   const setApiSourceId = useCallback((id: string) => {
-    setApiSource(id)
+    void setApiSource(id)
   }, [])
   const userApiListRaw = useUserApiList()
   const apiStatus = useStatus()
   const apiSourceSetting = useSettingValue('common.apiSource')
   const userApiList = useMemo(() => {
     const getApiStatus = () => {
-      let status
-      if (apiStatus.status) status = t('setting_basic_source_status_success')
-      else if (apiStatus.message == 'initing') status = t('setting_basic_source_status_initing')
-      else status = t('setting_basic_source_status_failed')
-
-      return status
+      if (apiStatus.status) return t('setting_basic_source_status_success')
+      if (apiStatus.message == 'initing') return t('setting_basic_source_status_initing')
+      return t('setting_basic_source_status_failed')
     }
+
     return userApiListRaw.map(api => {
       const statusLabel = api.id == apiSourceSetting ? `[${getApiStatus()}]` : ''
       return {
         id: api.id,
         name: api.name,
-        label: `${api.name}${statusLabel}`,
         desc: [/^\d/.test(api.version) ? `v${api.version}` : api.version].filter(Boolean).join(', '),
         statusLabel,
-        // status: apiStatus.status,
-        // message: apiStatus.message,
-        // disabled: false,
       }
     })
   }, [userApiListRaw, apiStatus, apiSourceSetting, t])
@@ -117,20 +109,12 @@ const styles = createStyle({
   list: {
     flexGrow: 0,
     flexShrink: 1,
-    // flexDirection: 'row',
-    // flexWrap: 'wrap',
   },
   btn: {
     marginTop: 10,
     flexDirection: 'row',
   },
-  sourceLabel: {
-
-  },
-  sourceDesc: {
-
-  },
-  sourceStatus: {
-
-  },
+  sourceLabel: {},
+  sourceDesc: {},
+  sourceStatus: {},
 })
