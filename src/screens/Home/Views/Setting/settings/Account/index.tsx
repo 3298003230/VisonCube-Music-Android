@@ -10,6 +10,12 @@ import { type AuthUser } from '@/features/auth/models'
 import { confirmDialog, createStyle } from '@/utils/tools'
 import { navigations } from '@/navigation'
 import commonState from '@/store/common/state'
+import {
+  getMusicCloudSyncStatus,
+  resolveMusicPlaylistConflicts,
+  subscribeMusicCloudSyncStatus,
+  syncMusicCloudNow,
+} from '@/features/musicSync'
 import Section from '../../components/Section'
 import InfoRow from './InfoRow'
 
@@ -24,6 +30,7 @@ export default () => {
   const theme = useTheme()
   const [user, setUser] = useState<AuthUser | null>(getCurrentUser())
   const [logoutBusy, setLogoutBusy] = useState(false)
+  const [syncStatus, setSyncStatus] = useState(getMusicCloudSyncStatus())
 
   useEffect(() => {
     let active = true
@@ -36,6 +43,8 @@ export default () => {
       active = false
     }
   }, [])
+
+  useEffect(() => subscribeMusicCloudSyncStatus(setSyncStatus), [])
 
   const handleChangePassword = () => {
     const componentId = commonState.componentIds.home
@@ -65,6 +74,17 @@ export default () => {
   const email = user?.email ?? t('account_no_email')
   const role = user ? getRoleLabel(user, t) : '-'
   const verified = Boolean(user?.email && user.email_verified_at)
+  const syncBusy = syncStatus.phase === 'syncing'
+  const syncStatusText = (() => {
+    switch (syncStatus.phase) {
+      case 'syncing': return t('account_sync_syncing')
+      case 'success': return t('account_sync_success')
+      case 'partial': return t('account_sync_partial')
+      case 'error': return t('account_sync_error')
+      case 'conflict': return t('account_sync_conflict', { num: syncStatus.conflictCount })
+      default: return t('account_sync_idle')
+    }
+  })()
 
   return (
     <Section title={t('account_title')}>
@@ -86,6 +106,45 @@ export default () => {
           <InfoRow label={t('account_username')} value={username} />
           <InfoRow label={t('account_email')} value={email} />
           <InfoRow label={t('account_email_status')} value={verified ? t('account_email_verified') : t('account_email_unverified')} last />
+        </View>
+
+        <View style={{ ...styles.sync, backgroundColor: theme['c-primary-light-1000-alpha-700'], borderColor: theme['c-border-background'] }}>
+          <Text size={16} style={styles.syncTitle}>{t('account_sync_title')}</Text>
+          <Text size={13} color={theme['c-font-label']} style={styles.syncStatus}>{syncStatusText}</Text>
+          {syncStatus.lastSuccessAt
+            ? <Text size={12} color={theme['c-font-label']} style={styles.syncMeta}>{t('account_sync_last', { time: new Date(syncStatus.lastSuccessAt).toLocaleString() })}</Text>
+            : null}
+          {syncStatus.error
+            ? <Text size={12} color={theme['c-font-label']} style={styles.syncMeta}>{syncStatus.error}</Text>
+            : null}
+          <View style={styles.syncActions}>
+            {syncStatus.phase === 'conflict'
+              ? <>
+                  <TouchableOpacity
+                    disabled={syncBusy}
+                    onPress={() => { void resolveMusicPlaylistConflicts('local') }}
+                    style={{ ...styles.syncButton, borderColor: theme['c-border-background'] }}
+                  >
+                    <Text size={13}>{t('account_sync_keep_local')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    disabled={syncBusy}
+                    onPress={() => { void resolveMusicPlaylistConflicts('remote') }}
+                    style={{ ...styles.syncButton, borderColor: theme['c-border-background'] }}
+                  >
+                    <Text size={13}>{t('account_sync_use_cloud')}</Text>
+                  </TouchableOpacity>
+                </>
+              : syncStatus.phase !== 'success'
+                ? <TouchableOpacity
+                    disabled={syncBusy}
+                    onPress={() => { void syncMusicCloudNow() }}
+                    style={{ ...styles.syncButton, borderColor: theme['c-border-background'] }}
+                  >
+                    <Text size={13}>{t('account_sync_retry')}</Text>
+                  </TouchableOpacity>
+                : null}
+          </View>
         </View>
 
         <View style={styles.securityHeader}>
@@ -153,6 +212,36 @@ const styles = createStyle({
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 22,
+  },
+  sync: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 22,
+  },
+  syncTitle: {
+    fontWeight: '700',
+  },
+  syncStatus: {
+    lineHeight: 19,
+    marginTop: 6,
+  },
+  syncMeta: {
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  syncActions: {
+    flexDirection: 'row',
+    marginTop: 12,
+  },
+  syncButton: {
+    flex: 1,
+    minHeight: 40,
+    borderWidth: 1,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   securityHeader: {
     marginBottom: 10,

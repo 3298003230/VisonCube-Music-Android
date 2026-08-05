@@ -1,7 +1,7 @@
 import * as authApi from './api'
 import { type AuthGateState, type AuthSession, type AuthUser, type PasswordCredentials, type RegisterCredentials } from './models'
 import { clearSession, loadSession, saveSession } from './storage'
-import { stopMusicCloudSync } from '@/features/musicSync'
+import { stopMusicCloudSync, updateMusicCloudSyncSession } from '@/features/musicSync'
 
 let currentSession: AuthSession | null = null
 
@@ -21,6 +21,7 @@ const isSessionUsable = (session: AuthSession) => {
 const persistSession = async(session: AuthSession) => {
   currentSession = session
   await saveSession(session)
+  updateMusicCloudSyncSession(session)
   return getGateState(session)
 }
 

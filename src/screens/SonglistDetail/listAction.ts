@@ -6,6 +6,7 @@ import listState from '@/store/list/state'
 import syncSourceList from '@/core/syncSourceList'
 import { confirmDialog, toMD5, toast } from '@/utils/tools'
 import { type Source } from '@/store/songlist/state'
+import { normalizeSourceListId } from '@/features/musicSync/model'
 
 const getListId = (id: string, source: LX.OnlineSource) => `${source}__${id}`
 
@@ -34,7 +35,11 @@ export const handlePlay = async(id: string, source: Source, list?: LX.Music.Musi
 export const handleCollect = async(id: string, source: Source, name: string) => {
   const listId = getListId(id, source)
 
-  const targetList = listState.userList.find(l => l.sourceListId == listId)
+  const targetList = listState.userList.find(l =>
+    l.source === source &&
+    Boolean(l.sourceListId) &&
+    normalizeSourceListId(source, l.sourceListId!) === id,
+  )
   if (targetList) {
     const confirm = await confirmDialog({
       message: global.i18n.t('duplicate_list_tip', { name: targetList.name }),
