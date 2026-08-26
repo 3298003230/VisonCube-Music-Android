@@ -119,7 +119,7 @@ android {
 
     namespace "cn.toside.music.mobile"
     defaultConfig {
-        applicationId "com.visoncube.music.mobile"
+        applicationId "com.visoncube.music"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode verCode
@@ -142,7 +142,11 @@ android {
                 keyAlias MYAPP_UPLOAD_KEY_ALIAS
                 keyPassword MYAPP_UPLOAD_KEY_PASSWORD
             } else {
-                def keystorePropertiesFile = rootProject.file("keystore.properties")
+                def signingDirectory = System.getenv('VISONCUBE_MUSIC_SIGNING_DIR') ?: 'D:/Compilationenvironment/VisonCube-Music-Signing'
+                def keystorePropertiesFile = new File(signingDirectory, 'keystore.properties')
+                if (!keystorePropertiesFile.isFile()) {
+                    throw new GradleException("Release signing configuration not found: ${keystorePropertiesFile}")
+                }
                 def keystoreProperties = new Properties()
                 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
@@ -164,9 +168,6 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
 

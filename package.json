@@ -1,8 +1,8 @@
 {
   "name": "visoncube-music-mobile",
-  "version": "2.13.2",
-  "versionCode": 83,
-  "displayVersion": "2.13.2",
+  "version": "2.13.3",
+  "versionCode": 84,
+  "displayVersion": "2.13.3",
   "private": true,
   "scripts": {
     "dev": "react-native run-android --active-arch-only",
