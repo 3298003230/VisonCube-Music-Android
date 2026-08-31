@@ -157,6 +157,8 @@
   "metadata_edit_modal_title": "Edit Song Metadata",
   "move_to": "Move to...",
   "music_source_detail": "Song Detail",
+  "clear_music_url_cache": "Clear song URL cache",
+  "clear_music_url_cache_success": "Song URL cache cleared",
   "music_toggle__confirm": "Confirm",
   "music_toggle__duplicate_tip": "The same song already exists in the list, should I remove it and continue?",
   "name": "Title: {name}",

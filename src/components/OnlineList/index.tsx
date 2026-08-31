@@ -6,7 +6,7 @@ import ListMenu, { type ListMenuType, type Position, type SelectInfo } from './L
 import ListMusicMultiAdd, { type MusicMultiAddModalType as ListAddMultiType } from '@/components/MusicMultiAddModal'
 import ListMusicAdd, { type MusicAddModalType as ListMusicAddType } from '@/components/MusicAddModal'
 import MultipleModeBar, { type MultipleModeBarType, type SelectMode } from './MultipleModeBar'
-import { handleDislikeMusic, handlePlay, handlePlayLater, handleShare, handleShowMusicSourceDetail } from './listAction'
+import { handleClearUrlCache, handleDislikeMusic, handlePlay, handlePlayLater, handleShare, handleShowMusicSourceDetail } from './listAction'
 import { createStyle } from '@/utils/tools'
 
 export interface OnlineListProps {
@@ -110,6 +110,7 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
         onCopyName={info => { handleShare(info.musicInfo) }}
         onAdd={handleAddMusic}
         onMusicSourceDetail={info => { void handleShowMusicSourceDetail(info.musicInfo) }}
+        onClearUrlCache={info => { void handleClearUrlCache(info.selectedList.length ? info.selectedList : [info.musicInfo]) }}
         onDislikeMusic={info => { void handleDislikeMusic(info.musicInfo) }}
       />
       {/* <LoadingMask ref={loadingMaskRef} /> */}
@@ -130,4 +131,3 @@ const styles = createStyle({
     height: 40,
   },
 })
-

@@ -11,6 +11,12 @@ import type { SelectInfo } from './ListMenu'
 import { type Metadata } from '@/components/MetadataEditModal'
 import musicSdk from '@/utils/musicSdk'
 import { getListMusicSync } from '@/utils/listManage'
+import { clearMusicUrlForMusic } from '@/utils/data'
+
+export const handleClearUrlCache = async(musicInfos: LX.Music.MusicInfo[]) => {
+  await clearMusicUrlForMusic(musicInfos)
+  toast(global.i18n.t('clear_music_url_cache_success'))
+}
 
 export const handlePlay = (listId: SelectInfo['listId'], index: SelectInfo['index']) => {
   void playList(listId, index)

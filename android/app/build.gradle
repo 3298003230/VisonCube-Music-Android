@@ -101,6 +101,8 @@ def npmPackageJson = getNpmPackageJson()
 def verCode = npmPackageJson["versionCode"]
 def verName = npmPackageJson["displayVersion"] ?: npmPackageJson["version"]
 def applicationName = npmPackageJson["name"]
+def releaseSigningConfigured = false
+def releaseSigningConfigPath = null
 
 // The React Native bundle embeds package.json version data. Track it explicitly
 // so a version-only release cannot reuse an earlier Hermes bundle.
@@ -141,19 +143,21 @@ android {
                 storePassword MYAPP_UPLOAD_STORE_PASSWORD
                 keyAlias MYAPP_UPLOAD_KEY_ALIAS
                 keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+                releaseSigningConfigured = true
             } else {
                 def signingDirectory = System.getenv('VISONCUBE_MUSIC_SIGNING_DIR') ?: 'D:/Compilationenvironment/VisonCube-Music-Signing'
                 def keystorePropertiesFile = new File(signingDirectory, 'keystore.properties')
-                if (!keystorePropertiesFile.isFile()) {
-                    throw new GradleException("Release signing configuration not found: ${keystorePropertiesFile}")
-                }
-                def keystoreProperties = new Properties()
-                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+                releaseSigningConfigPath = keystorePropertiesFile
+                if (keystorePropertiesFile.isFile()) {
+                    def keystoreProperties = new Properties()
+                    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
+                    storeFile file(keystoreProperties['storeFile'])
+                    storePassword keystoreProperties['storePassword']
+                    keyAlias keystoreProperties['keyAlias']
+                    keyPassword keystoreProperties['keyPassword']
+                    releaseSigningConfigured = true
+                }
             }
         }
         debug {
@@ -171,7 +175,11 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
 
-            signingConfig signingConfigs.release
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            } else if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+                throw new GradleException("Release signing configuration not found: ${releaseSigningConfigPath}")
+            }
         }
     }
 

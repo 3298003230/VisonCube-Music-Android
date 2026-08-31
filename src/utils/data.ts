@@ -346,6 +346,15 @@ export const clearMusicUrl = async(keys?: string[]) => {
   if (!keys) keys = (await getAllKeys()).filter(key => key.startsWith(storageDataPrefix.musicUrl))
   await removeDataMultiple(keys)
 }
+/** 清理指定歌曲的 URL 缓存（用于歌曲链接失效后的快速恢复）。 */
+export const clearMusicUrlForMusic = async(musicInfo: LX.Music.MusicInfo | LX.Music.MusicInfo[]) => {
+  const ids = new Set((Array.isArray(musicInfo) ? musicInfo : [musicInfo]).map(info => info.id))
+  const keys = (await getAllKeys()).filter(key => {
+    if (!key.startsWith(storageDataPrefix.musicUrl)) return false
+    return [...ids].some(id => key.startsWith(`${storageDataPrefix.musicUrl}${id}_`))
+  })
+  await clearMusicUrl(keys)
+}
 
 export const getLyric = async(musicInfo: LX.Music.MusicInfo) => getData<LX.Music.LyricInfo>(`${storageDataPrefix.lyric}${musicInfo.id}`).then(lrcInfo => lrcInfo ?? { lyric: '' })
 export const saveLyric = async(musicInfo: LX.Music.MusicInfo, lyricInfo: LX.Music.LyricInfo) => saveData(`${storageDataPrefix.lyric}${musicInfo.id}`, lyricInfo)

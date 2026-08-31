@@ -157,6 +157,8 @@
   "metadata_edit_modal_title": "编辑歌曲标签",
   "move_to": "移动到...",
   "music_source_detail": "歌曲详情页",
+  "clear_music_url_cache": "清理歌曲 URL 缓存",
+  "clear_music_url_cache_success": "歌曲 URL 缓存已清理",
   "music_toggle__confirm": "确认",
   "music_toggle__duplicate_tip": "列表中已存在相同的歌曲，是否将其移除并继续？",
   "name": "歌曲名：{name}",

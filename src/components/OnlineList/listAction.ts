@@ -9,6 +9,12 @@ import { addDislikeInfo, hasDislike } from '@/core/dislikeList'
 import playerState from '@/store/player/state'
 import musicSdk from '@/utils/musicSdk'
 import { toOldMusicInfo } from '@/utils'
+import { clearMusicUrlForMusic } from '@/utils/data'
+
+export const handleClearUrlCache = async(musicInfos: LX.Music.MusicInfoOnline[]) => {
+  await clearMusicUrlForMusic(musicInfos)
+  toast(global.i18n.t('clear_music_url_cache_success'))
+}
 
 export const handlePlay = (musicInfo: LX.Music.MusicInfoOnline) => {
   void addListMusics(LIST_IDS.DEFAULT, [musicInfo], settingState.setting['list.addMusicLocationType']).then(() => {
@@ -52,4 +58,3 @@ export const handleDislikeMusic = async(musicInfo: LX.Music.MusicInfoOnline) => 
     void playNext(true)
   }
 }
-
