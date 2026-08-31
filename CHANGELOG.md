@@ -6,6 +6,18 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Commit convention is based on [Conventional Commits](http://conventionalcommits.org).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.13.4](https://github.com/3298003230/VisonCube-Music-Android/compare/v2.13.3...v2.13.4) - 2026-08-31
+
+### 优化
+
+- 优化歌曲换源匹配、容量单位、歌词时间解析和歌单总数显示。
+- 优化 MG 图片、歌词、歌曲 ID 获取及 QQ 歌单详情回退逻辑。
+
+### 修复
+
+- 增加错误歌曲 URL 缓存清理入口，减少失效链接重复使用。
+- 保持正式签名配置与旧版本包名兼容，便于安全升级。
+
 ## [1.8.4](https://github.com/lyswhut/lx-music-mobile/compare/v1.8.3...v1.8.4) - 2026-05-01
 
 我们很高兴地宣布新项目 Any Listen 的桌面版已发布，目前已支持列表跟随本地文件自动更新、加载并播放WebDAV上的歌曲等功能，更多功能仍在积极开发中，桌面版与Web版将同步更新。

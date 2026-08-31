@@ -48,33 +48,44 @@ jobs:
       - name: Build Packages
         env:
           DISABLE_SVG: 1
+          KEYSTORE_STORE_FILE_BASE64: ${{ secrets.KEYSTORE_STORE_FILE_BASE64 }}
+          KEYSTORE_STORE_FILE: ${{ secrets.KEYSTORE_STORE_FILE }}
+          KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
         shell: bash
         run: |
+          set -euo pipefail
           cd android
-          echo ${{ secrets.KEYSTORE_STORE_FILE_BASE64 }} | base64 --decode > app/${{ secrets.KEYSTORE_STORE_FILE }}
-          ./gradlew assembleRelease -PMYAPP_UPLOAD_STORE_FILE='${{ secrets.KEYSTORE_STORE_FILE }}' -PMYAPP_UPLOAD_KEY_ALIAS='${{ secrets.KEYSTORE_KEY_ALIAS }}' -PMYAPP_UPLOAD_STORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}' -PMYAPP_UPLOAD_KEY_PASSWORD='${{ secrets.KEYSTORE_KEY_PASSWORD }}'
-          rm -f app/${{ secrets.KEYSTORE_STORE_FILE }}
+          case "$KEYSTORE_STORE_FILE" in
+            ''|*/*|*\\*) echo 'KEYSTORE_STORE_FILE must be a file name, not a path.' >&2; exit 1 ;;
+          esac
+          trap 'rm -f -- "app/$KEYSTORE_STORE_FILE"' EXIT
+          printf '%s' "$KEYSTORE_STORE_FILE_BASE64" | base64 --decode > "app/$KEYSTORE_STORE_FILE"
+          ./gradlew assembleRelease -PMYAPP_UPLOAD_STORE_FILE="$KEYSTORE_STORE_FILE" -PMYAPP_UPLOAD_KEY_ALIAS="$KEYSTORE_KEY_ALIAS" -PMYAPP_UPLOAD_STORE_PASSWORD="$KEYSTORE_PASSWORD" -PMYAPP_UPLOAD_KEY_PASSWORD="$KEYSTORE_KEY_PASSWORD"
 
-      # Push tag to GitHub if package.json version's tag is not tagged
       - name: Get package version
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
 
-      - name: Create official git tag
-        if: ${{ inputs.publish_release }}
-        uses: pkgdeps/git-tag-action@a5a161774bace8b4e1969dd850c67a7421f1b710 # v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          github_repo: ${{ github.repository }}
-          version: ${{ env.PACKAGE_VERSION }}
-          git_commit_sha: ${{ github.sha }}
-          git_tag_prefix: "v"
-
       - name: Generate file MD5
         run: |
           cd android/app/build/outputs/apk/release
           md5sum *.apk
+
+      - name: Verify APK signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          if [[ -z "$APKSIGNER" ]]; then
+            echo 'Unable to locate Android apksigner.' >&2
+            exit 1
+          fi
+          for apk in android/app/build/outputs/apk/release/*.apk; do
+            "$APKSIGNER" verify --print-certs "$apk"
+          done
 
       - name: Upload Artifact
         uses: ./.github/actions/upload-artifact
