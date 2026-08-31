@@ -17,6 +17,28 @@ jobs:
       - name: Setup Env
         uses: ./.github/actions/setup
 
+      - name: Verify release signing secrets
+        shell: bash
+        env:
+          KEYSTORE_STORE_FILE_BASE64: ${{ secrets.KEYSTORE_STORE_FILE_BASE64 }}
+          KEYSTORE_STORE_FILE: ${{ secrets.KEYSTORE_STORE_FILE }}
+          KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for variable in \
+            KEYSTORE_STORE_FILE_BASE64 \
+            KEYSTORE_STORE_FILE \
+            KEYSTORE_KEY_ALIAS \
+            KEYSTORE_PASSWORD \
+            KEYSTORE_KEY_PASSWORD; do
+            if [[ -z "${!variable}" ]]; then
+              echo "::error::Missing required Android release secret: $variable"
+              exit 1
+            fi
+          done
+
       - name: Build Packages
         env:
           DISABLE_SVG: 1
