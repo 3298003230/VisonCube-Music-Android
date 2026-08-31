@@ -2,6 +2,12 @@ name: Build
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Create the official GitHub tag and Release after candidate validation'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -55,7 +61,8 @@ jobs:
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
 
-      - name: Create git tag
+      - name: Create official git tag
+        if: ${{ inputs.publish_release }}
         uses: pkgdeps/git-tag-action@a5a161774bace8b4e1969dd850c67a7421f1b710 # v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -170,6 +177,7 @@ jobs:
 
   Release:
     name: Release
+    if: ${{ inputs.publish_release }}
     runs-on: ubuntu-latest
     # needs: [Android, Android_SL]
     needs: [Android]
