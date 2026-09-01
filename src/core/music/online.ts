@@ -59,7 +59,9 @@ export const getMusicUrl = async({ musicInfo, quality, isRefresh, allowToggleSou
     try {
       await assertMusicUrlAvailable(cachedUrl)
       return cachedUrl
-    } catch {}
+    } catch {
+      // Ignore stale cached URLs and continue with source fallback.
+    }
   }
 
   return handleGetOnlineMusicUrl({ musicInfo, quality, onToggleSource, isRefresh, allowToggleSource }).then(({ url, quality: targetQuality, musicInfo: targetMusicInfo, isFromCache }) => {

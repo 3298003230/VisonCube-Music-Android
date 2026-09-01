@@ -115,7 +115,9 @@ export default () => {
           scrollCancelRef.current = scrollTo(flatListRef.current, scrollInfoRef.current, offset - scrollInfoRef.current.layoutMeasurement.height * 0.42, 600, () => {
             scrollCancelRef.current = null
           })
-        } catch {}
+        } catch {
+          // The list may be unmounted while a scroll animation is pending.
+        }
       } else {
         if (scrollCancelRef.current) {
           scrollCancelRef.current()
@@ -127,7 +129,9 @@ export default () => {
             animated: true,
             viewPosition: 0.42,
           })
-        } catch {}
+        } catch {
+          // The list may be unmounted while a scroll animation is pending.
+        }
       }
     }
   }

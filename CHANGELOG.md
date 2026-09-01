@@ -6,6 +6,12 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Commit convention is based on [Conventional Commits](http://conventionalcommits.org).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.13.5](https://github.com/3298003230/VisonCube-Music-Android/compare/v2.13.4...v2.13.5) - 2026-09-01
+
+### 其他
+
+- 跟进原作者近期稳定修复并重新构建发布；保留 VisonCube Music 现有自定义功能与数据兼容性。
+
 ## [2.13.4](https://github.com/3298003230/VisonCube-Music-Android/compare/v2.13.3...v2.13.4) - 2026-08-31
 
 ### 优化
