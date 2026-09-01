@@ -10,7 +10,7 @@
     "start": "react-native start",
     "sc": "react-native start --reset-cache",
     "test:music-sync": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/music-sync-model.test.ts",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "rd": "react-devtools",
     "menu": "adb shell input keyevent 82",

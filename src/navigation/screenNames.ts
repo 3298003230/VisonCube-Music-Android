@@ -6,6 +6,3 @@ export const AUTH_SCREEN = 'lxm.AuthScreen'
 export const ACCOUNT_CHANGE_PASSWORD_SCREEN = 'lxm.AccountChangePasswordScreen'
 export const VERSION_MODAL = 'lxm.VersionModal'
 export const SYNC_MODE_MODAL = 'lxm.SyncModeModal'
-// export const SETTING_SCREEN = 'lxm.SettingScreen'
-// export const TOAST_SCREEN = 'lxm.ToastScreen'
-

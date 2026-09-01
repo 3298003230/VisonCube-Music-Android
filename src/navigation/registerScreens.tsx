@@ -19,7 +19,6 @@ import {
   ACCOUNT_CHANGE_PASSWORD_SCREEN,
   VERSION_MODAL,
   SYNC_MODE_MODAL,
-  // SETTING_SCREEN,
 } from './screenNames'
 import VersionModal from './components/VersionModal'
 import SyncModeModal from './components/SyncModeModal'
@@ -47,7 +46,6 @@ export default () => {
   Navigation.registerComponent(ACCOUNT_CHANGE_PASSWORD_SCREEN, () => WrappedComponent(AccountChangePassword))
   Navigation.registerComponent(VERSION_MODAL, () => WrappedComponent(VersionModal))
   Navigation.registerComponent(SYNC_MODE_MODAL, () => WrappedComponent(SyncModeModal))
-  // Navigation.registerComponent(SETTING_SCREEN, () => WrappedComponent(Setting))
 
   console.info('All screens have been registered...')
 }

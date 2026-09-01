@@ -4,24 +4,42 @@ on:
   workflow_dispatch:
     inputs:
       publish_release:
-        description: 'Create the official GitHub tag and Release after candidate validation'
+        description: 'Create the official GitHub Release after candidate validation'
         required: true
         default: false
         type: boolean
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   Android:
-    name: Android
+    name: Android signed candidates
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CI: 'true'
+      DISABLE_SVG: '1'
     steps:
       - name: Check out git repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - name: Setup Env
+      - name: Setup build environment
         uses: ./.github/actions/setup
+
+      - name: Verify release metadata
+        run: |
+          npm run publish
+          git diff --exit-code -- package.json package-lock.json CHANGELOG.md publish/version.json
+
+      - name: Test music sync model
+        run: npm run test:music-sync
+
+      - name: Lint source code
+        run: npm run lint
+
+      - name: Build JavaScript bundle
+        run: npm run build-test
 
       - name: Verify release signing secrets
         shell: bash
@@ -45,9 +63,8 @@ jobs:
             fi
           done
 
-      - name: Build Packages
+      - name: Build signed APKs
         env:
-          DISABLE_SVG: 1
           KEYSTORE_STORE_FILE_BASE64: ${{ secrets.KEYSTORE_STORE_FILE_BASE64 }}
           KEYSTORE_STORE_FILE: ${{ secrets.KEYSTORE_STORE_FILE }}
           KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
@@ -62,174 +79,121 @@ jobs:
           esac
           trap 'rm -f -- "app/$KEYSTORE_STORE_FILE"' EXIT
           printf '%s' "$KEYSTORE_STORE_FILE_BASE64" | base64 --decode > "app/$KEYSTORE_STORE_FILE"
-          ./gradlew assembleRelease -PMYAPP_UPLOAD_STORE_FILE="$KEYSTORE_STORE_FILE" -PMYAPP_UPLOAD_KEY_ALIAS="$KEYSTORE_KEY_ALIAS" -PMYAPP_UPLOAD_STORE_PASSWORD="$KEYSTORE_PASSWORD" -PMYAPP_UPLOAD_KEY_PASSWORD="$KEYSTORE_KEY_PASSWORD"
+          ./gradlew assembleRelease --no-daemon --stacktrace \
+            -PMYAPP_UPLOAD_STORE_FILE="$KEYSTORE_STORE_FILE" \
+            -PMYAPP_UPLOAD_KEY_ALIAS="$KEYSTORE_KEY_ALIAS" \
+            -PMYAPP_UPLOAD_STORE_PASSWORD="$KEYSTORE_PASSWORD" \
+            -PMYAPP_UPLOAD_KEY_PASSWORD="$KEYSTORE_KEY_PASSWORD"
 
-      - name: Get package version
-        run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
-
-      - name: Generate file MD5
-        run: |
-          cd android/app/build/outputs/apk/release
-          md5sum *.apk
-
-      - name: Verify APK signatures
+      - name: Get package metadata
         shell: bash
         run: |
+          echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+          echo "BASE_VERSION_CODE=$(node -p "require('./package.json').versionCode")" >> "$GITHUB_ENV"
+
+      - name: Verify APK metadata and signatures
+        shell: bash
+        env:
+          EXPECTED_CERT_SHA256: 9c951c4bba399d21751f4b194e839da3a49efd60534cf9b3b9d35859a6d6bc95
+        run: |
           set -euo pipefail
-          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
-          if [[ -z "$APKSIGNER" ]]; then
-            echo 'Unable to locate Android apksigner.' >&2
-            exit 1
-          fi
-          for apk in android/app/build/outputs/apk/release/*.apk; do
-            "$APKSIGNER" verify --print-certs "$apk"
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          APKSIGNER="$BUILD_TOOLS/apksigner"
+          AAPT="$BUILD_TOOLS/aapt"
+          [[ -x "$APKSIGNER" && -x "$AAPT" ]] || { echo 'Android verification tools are unavailable.' >&2; exit 1; }
+
+          output_dir='android/app/build/outputs/apk/release'
+          declare -A version_codes=(
+            [arm64-v8a]="$((BASE_VERSION_CODE * 1000 + 3))"
+            [armeabi-v7a]="$((BASE_VERSION_CODE * 1000 + 1))"
+            [x86_64]="$((BASE_VERSION_CODE * 1000 + 4))"
+            [x86]="$((BASE_VERSION_CODE * 1000 + 2))"
+            [universal]="$BASE_VERSION_CODE"
+          )
+
+          for abi in arm64-v8a armeabi-v7a x86_64 x86 universal; do
+            apk="$output_dir/visoncube-music-mobile-v${PACKAGE_VERSION}-${abi}.apk"
+            [[ -f "$apk" ]] || { echo "Missing expected APK: $apk" >&2; exit 1; }
+            signature_output=$($APKSIGNER verify --print-certs "$apk")
+            printf '%s\n' "$signature_output"
+            actual_cert=$(printf '%s\n' "$signature_output" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1 | tr -d ':' | tr '[:upper:]' '[:lower:]')
+            [[ "$actual_cert" == "$EXPECTED_CERT_SHA256" ]] || { echo "Unexpected signing certificate for $apk" >&2; exit 1; }
+            badging=$($AAPT dump badging "$apk")
+            expected_package="package: name='com.visoncube.music' versionCode='${version_codes[$abi]}' versionName='${PACKAGE_VERSION}'"
+            grep -Fq "$expected_package" <<< "$badging" || { echo "Unexpected package metadata for $apk" >&2; exit 1; }
           done
 
-      - name: Upload Artifact
+          cd "$output_dir"
+          sha256sum "visoncube-music-mobile-v${PACKAGE_VERSION}-"*.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload APK artifacts
         uses: ./.github/actions/upload-artifact
         env:
           PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
 
-  # Android_SL:
-  #   name: Android_SL
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out git repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: statusbar_lyric
-
-  #     - name: Setup Env
-  #       uses: ./.github/actions/setup
-
-  #     - name: Build Packages
-  #       shell: bash
-  #       run: |
-  #         cd android
-  #         echo ${{ secrets.KEYSTORE_STORE_FILE_BASE64 }} | base64 --decode > app/${{ secrets.KEYSTORE_STORE_FILE }}
-  #         ./gradlew assembleRelease -PMYAPP_UPLOAD_STORE_FILE='${{ secrets.KEYSTORE_STORE_FILE }}' -PMYAPP_UPLOAD_KEY_ALIAS='${{ secrets.KEYSTORE_KEY_ALIAS }}' -PMYAPP_UPLOAD_STORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}' -PMYAPP_UPLOAD_KEY_PASSWORD='${{ secrets.KEYSTORE_KEY_PASSWORD }}'
-  #         rm -f app/${{ secrets.KEYSTORE_STORE_FILE }}
-
-  #     # Push tag to GitHub if package.json version's tag is not tagged
-  #     - name: Get package version
-  #       run: |
-  #         node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
-  #         echo "COMMIT_SHA=$(git show -s --format=%H)" >> $GITHUB_ENV
-
-  #     - name: Create git tag
-  #       uses: pkgdeps/git-tag-action@v3
-  #       with:
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         github_repo: ${{ github.repository }}
-  #         version: ${{ env.PACKAGE_VERSION }}
-  #         git_commit_sha: ${{ env.COMMIT_SHA }}
-  #         git_tag_prefix: "v"
-
-  #     - name: Generate file MD5
-  #       run: |
-  #         echo "current commit sha: ${{ env.COMMIT_SHA }}"
-  #         cd android/app/build/outputs/apk/release
-  #         md5sum *.apk
-
-  #     - name: Upload Artifact
-  #       uses: ./.github/actions/upload-artifact
-  #       env:
-  #         PACKAGE_TYPE: 'Android_SL'
-  #         PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-
-  # Android_5:
-  #   name: Android_5
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check out git repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: android_5
-
-  #     - name: Setup Env
-  #       uses: ./.github/actions/setup
-
-  #     - name: Build Packages
-  #       shell: bash
-  #       run: |
-  #         cd android
-  #         echo ${{ secrets.KEYSTORE_STORE_FILE_BASE64 }} | base64 --decode > app/${{ secrets.KEYSTORE_STORE_FILE }}
-  #         ./gradlew assembleRelease -PMYAPP_UPLOAD_STORE_FILE='${{ secrets.KEYSTORE_STORE_FILE }}' -PMYAPP_UPLOAD_KEY_ALIAS='${{ secrets.KEYSTORE_KEY_ALIAS }}' -PMYAPP_UPLOAD_STORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}' -PMYAPP_UPLOAD_KEY_PASSWORD='${{ secrets.KEYSTORE_KEY_PASSWORD }}'
-  #         rm -f app/${{ secrets.KEYSTORE_STORE_FILE }}
-
-  #     # Push tag to GitHub if package.json version's tag is not tagged
-  #     - name: Get package version
-  #       run: |
-  #         node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
-  #         echo "COMMIT_SHA=$(git show -s --format=%H)" >> $GITHUB_ENV
-
-  #     - name: Create git tag
-  #       uses: pkgdeps/git-tag-action@v3
-  #       with:
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         github_repo: ${{ github.repository }}
-  #         version: ${{ env.PACKAGE_VERSION }}
-  #         git_commit_sha: ${{ env.COMMIT_SHA }}
-  #         git_tag_prefix: "v"
-
-  #     - name: Generate file MD5
-  #       run: |
-  #         echo "current commit sha: ${{ env.COMMIT_SHA }}"
-  #         cd android/app/build/outputs/apk/release
-  #         md5sum *.apk
-
-  #     - name: Upload Artifact
-  #       uses: ./.github/actions/upload-artifact
-  #       env:
-  #         PACKAGE_TYPE: 'Android_5'
-  #         PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
+      - name: Upload checksum artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: visoncube-music-v${{ env.PACKAGE_VERSION }}-checksums
+          path: android/app/build/outputs/apk/release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
 
   Release:
-    name: Release
+    name: Publish GitHub Release
     if: ${{ inputs.publish_release }}
+    needs: Android
     runs-on: ubuntu-latest
-    # needs: [Android, Android_SL]
-    needs: [Android]
+    permissions:
+      contents: write
     steps:
       - name: Check out git repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - name: Download Artifacts
+      - name: Download candidate assets
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          path: ./artifacts
+          path: artifacts
           merge-multiple: true
 
-      - name: Generate file MD5
+      - name: Prepare release metadata
+        shell: bash
         run: |
-          echo -e '\n### File MD5\n```' >> ./publish/changeLog.md
-          cd artifacts
-          md5sum *.apk >> ../publish/changeLog.md
-          echo -e '```\n' >> ../publish/changeLog.md
-          echo -e '\n[VisonCube Music Android Releases](https://github.com/3298003230/VisonCube-Music-Android/releases)\n' >> ../publish/changeLog.md
-
-      - name: Get package version
-        run: |
+          set -euo pipefail
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+          if git ls-remote --exit-code --tags origin "refs/tags/v${PACKAGE_VERSION}" >/dev/null 2>&1; then
+            echo "Release tag v${PACKAGE_VERSION} already exists." >&2
+            exit 1
+          fi
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> "$GITHUB_ENV"
+          node <<'NODE'
+          const fs = require('fs')
+          const pkg = require('./package.json')
+          const { parseVersionSections } = require('./publish/utils/updateChangeLog')
+          const sections = parseVersionSections(fs.readFileSync('./publish/changeLog.md', 'utf8'))
+          const current = sections.find(section => section.version === pkg.version)
+          if (!current) throw new Error(`Missing release notes for ${pkg.version}.`)
+          fs.writeFileSync('./release-notes.md', `${current.markdown}\n`)
+          NODE
+          cd artifacts
+          sha256sum "visoncube-music-mobile-v${PACKAGE_VERSION}-"*.apk > SHA256SUMS.txt
 
-      - name: Release
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          body_path: ./publish/changeLog.md
-          prerelease: false
-          draft: false
+          name: VisonCube Music Android v${{ env.PACKAGE_VERSION }}
           tag_name: v${{ env.PACKAGE_VERSION }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
           files: |
             artifacts/visoncube-music-mobile-v${{ env.PACKAGE_VERSION }}-arm64-v8a.apk
             artifacts/visoncube-music-mobile-v${{ env.PACKAGE_VERSION }}-armeabi-v7a.apk
             artifacts/visoncube-music-mobile-v${{ env.PACKAGE_VERSION }}-x86_64.apk
             artifacts/visoncube-music-mobile-v${{ env.PACKAGE_VERSION }}-x86.apk
             artifacts/visoncube-music-mobile-v${{ env.PACKAGE_VERSION }}-universal.apk
-
-          # artifacts/lx-music-mobile-v${{ env.PACKAGE_VERSION }}-sl-arm64-v8a.apk
-          # artifacts/lx-music-mobile-v${{ env.PACKAGE_VERSION }}-android_5-universal.apk
+            artifacts/SHA256SUMS.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

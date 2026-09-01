@@ -8,7 +8,6 @@ import {
   COMMENT_SCREEN,
   AUTH_SCREEN,
   ACCOUNT_CHANGE_PASSWORD_SCREEN,
-  // SETTING_SCREEN,
 } from './screenNames'
 
 import themeState from '@/store/theme/state'
