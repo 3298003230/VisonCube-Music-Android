@@ -99,7 +99,11 @@ export const getMusicUrl = async({ musicInfo, isRefresh, allowToggleSource = tru
   }
 
   try {
-    return await getOnlineOtherSourceMusicUrlByLocal(musicInfo, isRefresh).then(({ url, quality, isFromCache }) => {
+    return await getOnlineOtherSourceMusicUrlByLocal(musicInfo, isRefresh).then(({ url, quality, isFromCache }: {
+      url: string
+      quality: LX.Quality
+      isFromCache: boolean
+    }) => {
       if (!isFromCache) void saveMusicUrl(musicInfo, quality, url)
       return url
     })
