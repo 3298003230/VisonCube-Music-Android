@@ -116,7 +116,7 @@ jobs:
             [[ -f "$apk" ]] || { echo "Missing expected APK: $apk" >&2; exit 1; }
             signature_output=$($APKSIGNER verify --print-certs "$apk")
             printf '%s\n' "$signature_output"
-            actual_cert=$(printf '%s\n' "$signature_output" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1 | tr -d ':' | tr '[:upper:]' '[:lower:]')
+            actual_cert=$(printf '%s\n' "$signature_output" | sed -n -e 's/^Signer #1 certificate SHA-256 digest: //p' -e 's/^V2 Signer: certificate SHA-256 digest: //p' | head -n 1 | tr -d ':' | tr '[:upper:]' '[:lower:]')
             [[ "$actual_cert" == "$EXPECTED_CERT_SHA256" ]] || { echo "Unexpected signing certificate for $apk" >&2; exit 1; }
             badging=$($AAPT dump badging "$apk")
             expected_package="package: name='com.visoncube.music' versionCode='${version_codes[$abi]}' versionName='${PACKAGE_VERSION}'"
