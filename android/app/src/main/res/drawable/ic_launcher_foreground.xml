@@ -1,4 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-    android:src="@drawable/visoncube_music_icon_foreground"
-    android:gravity="fill" />
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <!-- Keep the logo inside the adaptive-icon safe zone and optically center
+         the open C shape, whose geometric bounds are left-heavy by design. -->
+    <group
+        android:pivotX="512"
+        android:pivotY="512"
+        android:scaleX="1.08"
+        android:scaleY="1.08"
+        android:translateX="40">
+        <path
+            android:fillColor="@android:color/transparent"
+            android:pathData="M733,345C680,285 603,248 512,248C349,248 218,366 218,512C218,658 349,776 512,776C603,776 680,739 733,679"
+            android:strokeColor="#142B4A"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="76" />
+        <path
+            android:fillColor="@android:color/transparent"
+            android:pathData="M669,389C628,351 573,328 512,328C393,328 298,410 298,512C298,614 393,696 512,696C573,696 628,673 669,635"
+            android:strokeColor="#335775"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="16" />
+        <path
+            android:fillColor="@android:color/transparent"
+            android:pathData="M389,415L510,653L643,415"
+            android:strokeColor="#18A99A"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="70" />
+    </group>
+</vector>
