@@ -10,6 +10,7 @@ import type { InitState } from '@/store/common/state'
 import { exitApp, setNavActiveId } from '@/core/common'
 import { BorderWidths } from '@/theme'
 import { useSettingValue } from '@/store/setting/hook'
+import Text from '@/components/common/Text'
 
 const NAV_WIDTH = 68
 
@@ -33,7 +34,7 @@ const styles = createStyle({
   },
   headerText: {
     textAlign: 'center',
-    marginLeft: 16,
+    fontWeight: '700',
   },
   menus: {
     flex: 1,
@@ -69,7 +70,7 @@ const Header = () => {
   return (
     <View style={{ paddingTop: statusBarHeight }}>
       <View style={styles.header}>
-        <Icon name="logo" color={theme['c-primary-dark-100-alpha-300']} size={22} />
+        <Text style={styles.headerText} size={20} color={theme['c-primary-dark-100-alpha-300']}>VC</Text>
       </View>
     </View>
   )

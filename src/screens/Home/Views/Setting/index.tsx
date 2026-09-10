@@ -12,12 +12,13 @@ export type { SettingScreenIds } from './Main'
 export default () => {
   const isHorizontalMode = useHorizontalMode()
   useBackHandler(useCallback(() => {
+    if (!isHorizontalMode) return false
     if (Object.keys(commonState.componentIds).length == 1 && commonState.navActiveId == 'nav_setting') {
       setNavActiveId(commonState.lastNavActiveId)
       return true
     }
     return false
-  }, []))
+  }, [isHorizontalMode]))
 
   return isHorizontalMode
     ? <Horizontal />

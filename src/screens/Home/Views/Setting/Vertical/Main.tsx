@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ScrollView, TouchableOpacity, View } from 'react-native'
 
 import { Icon } from '@/components/common/Icon'
@@ -6,6 +6,9 @@ import Text from '@/components/common/Text'
 import { useI18n } from '@/lang'
 import { useTheme } from '@/store/theme/hook'
 import { createStyle } from '@/utils/tools'
+import { useBackHandler } from '@/utils/hooks/useBackHandler'
+import commonState from '@/store/common/state'
+import { setNavActiveId } from '@/core/common'
 import {
   SETTING_GROUPS,
   SettingContent,
@@ -61,13 +64,25 @@ export default () => {
     if (group) global.lx.settingActiveId = group.screens[0]
   }
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (screenId) {
       setScreenId(null)
       return
     }
     setGroupId(null)
-  }
+  }, [screenId])
+
+  useBackHandler(useCallback(() => {
+    if (screenId || groupId) {
+      goBack()
+      return true
+    }
+    if (Object.keys(commonState.componentIds).length == 1 && commonState.navActiveId == 'nav_setting') {
+      setNavActiveId(commonState.lastNavActiveId)
+      return true
+    }
+    return false
+  }, [goBack, groupId, screenId]))
 
   if (screenId) {
     return (
