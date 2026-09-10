@@ -73,7 +73,7 @@ export default () => {
   }, [screenId])
 
   useBackHandler(useCallback(() => {
-    if (screenId || groupId) {
+    if (screenId != null || groupId != null) {
       goBack()
       return true
     }
