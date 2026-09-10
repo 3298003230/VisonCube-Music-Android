@@ -30,7 +30,7 @@ export default memo(() => {
   const statusLabel = actionError || (managedStatus.phase == 'updating'
     ? t('setting_basic_source_update_loading')
     : managedStatus.phase == 'error'
-      ? managedStatus.message || t('setting_basic_source_update_failed')
+      ? managedStatus.message ?? t('setting_basic_source_update_failed')
       : managedStatus.manifest
         ? `${t('setting_basic_source_update_version')} v${managedStatus.manifest.version}`
         : t('setting_basic_source_update_idle'))
