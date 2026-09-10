@@ -28,3 +28,10 @@ void test('cached managed source remains connected to user API initialization', 
     'managed source must hydrate before publishing the user API list',
   )
 })
+
+void test('managed source is routed through the user API playback adapter', async() => {
+  const apiSource = await readSource('../src/utils/musicSdk/api-source.js')
+
+  assert.match(apiSource, /import \{ isUserApiSource \} from '@\/config\/constant'/)
+  assert.match(apiSource, /isUserApiSource\(settingState\.setting\['common\.apiSource'\]\)/)
+})
