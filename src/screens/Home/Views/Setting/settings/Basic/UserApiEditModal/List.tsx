@@ -91,7 +91,7 @@ export default () => {
       if (settingState.setting['common.apiSource'] == id) {
         let backApiId = apiSourceInfo.find(api => !api.disabled)?.id
         if (!backApiId) backApiId = userApiState.list[0]?.id
-        setApiSource(backApiId ?? '')
+        void setApiSource(backApiId ?? '')
       }
     })
   }, [])
@@ -161,5 +161,4 @@ const styles = createStyle({
     marginBottom: 15,
   },
 })
-
 

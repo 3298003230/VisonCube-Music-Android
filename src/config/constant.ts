@@ -79,6 +79,10 @@ export const storageDataPrefix = {
   userApi: '@user_api__',
 } as const
 
+export const MANAGED_USER_API_ID = 'managed_user_api'
+
+export const isUserApiSource = (apiId: string) => apiId == MANAGED_USER_API_ID || /^user_api/.test(apiId)
+
 // v0.x.x 版本的 data keys
 export const storageDataPrefixOld = {
   setting: '@setting',

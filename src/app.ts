@@ -66,7 +66,7 @@ void Promise.all([getFontSize(), windowSizeTools.init()]).then(async([fontSize])
     })
   }
 
-  await initNavigation(async() => {
+  initNavigation(async() => {
     const authState = await restoreSession()
     if (authState === 'authenticated') {
       await continueToApp()

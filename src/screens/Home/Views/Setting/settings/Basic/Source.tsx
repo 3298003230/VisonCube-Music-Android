@@ -61,7 +61,7 @@ export default memo(() => {
     id: s.id,
   })), [t])
   const setApiSourceId = useCallback((id: string) => {
-    setApiSource(id)
+    void setApiSource(id)
   }, [])
   const userApiListRaw = useUserApiList()
   const apiStatus = useStatus()

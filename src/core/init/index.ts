@@ -48,7 +48,7 @@ export default async() => {
   await initUserApi(setting)
   bootLog('User Api inited.')
 
-  setApiSource(setting['common.apiSource'])
+  void setApiSource(setting['common.apiSource'])
   bootLog('Api inited.')
 
   registerPlaybackService()
