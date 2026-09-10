@@ -12,25 +12,28 @@ import { MANAGED_USER_API_ID, getManagedSourceStatus, subscribeManagedSourceStat
 export default memo(() => {
   const t = useI18n()
   const [managedStatus, setManagedStatus] = useState(getManagedSourceStatus())
+  const [actionError, setActionError] = useState('')
   useEffect(() => subscribeManagedSourceStatus(setManagedStatus), [])
 
   const handleUpdate = async() => {
+    setActionError('')
     try {
       await updateManagedSource()
       const initialized = await setApiSource(MANAGED_USER_API_ID)
       if (!initialized) throw new Error(t('setting_basic_source_update_failed'))
-    } catch {
+    } catch (error) {
       // The source module keeps the last known-good source when an update fails.
+      setActionError(error instanceof Error ? error.message : t('setting_basic_source_update_failed'))
     }
   }
 
-  const statusLabel = managedStatus.phase == 'updating'
+  const statusLabel = actionError || (managedStatus.phase == 'updating'
     ? t('setting_basic_source_update_loading')
     : managedStatus.phase == 'error'
-      ? t('setting_basic_source_update_failed')
+      ? managedStatus.message || t('setting_basic_source_update_failed')
       : managedStatus.manifest
         ? `${t('setting_basic_source_update_version')} v${managedStatus.manifest.version}`
-        : t('setting_basic_source_update_idle')
+        : t('setting_basic_source_update_idle'))
 
   return (
     <View style={styles.container}>
