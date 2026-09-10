@@ -2,14 +2,14 @@ import { Navigation } from 'react-native-navigation'
 import * as screenNames from './screenNames'
 import * as navigations from './navigation'
 
-import commonActions from '@/store/common/action'
+import registerScreens from './registerScreens'
+import { removeComponentId } from '@/core/common'
 import { onAppLaunched } from './regLaunchedEvent'
 
 let unRegisterEvent: ReturnType<ReturnType<typeof Navigation.events>['registerScreenPoppedListener']>
 
-const init = async(callback: () => void | Promise<void>) => {
+const init = (callback: () => void | Promise<void>) => {
   // Register all screens on launch
-  const { default: registerScreens } = await import('./registerScreens')
   registerScreens()
 
   if (unRegisterEvent) unRegisterEvent.remove()
@@ -22,7 +22,7 @@ const init = async(callback: () => void | Promise<void>) => {
     // },
   })
   unRegisterEvent = Navigation.events().registerScreenPoppedListener(({ componentId }) => {
-    commonActions.removeComponentId(componentId)
+    removeComponentId(componentId)
   })
   onAppLaunched(() => {
     console.log('Register app launched listener')

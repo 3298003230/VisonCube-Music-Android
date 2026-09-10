@@ -17,7 +17,6 @@ export interface ListMenuProps {
   onAdd: (selectInfo: SelectInfo) => void
   onCopyName: (selectInfo: SelectInfo) => void
   onMusicSourceDetail: (selectInfo: SelectInfo) => void
-  onClearUrlCache: (selectInfo: SelectInfo) => void
   onDislikeMusic: (selectInfo: SelectInfo) => void
 }
 export interface ListMenuType {
@@ -57,7 +56,6 @@ export default forwardRef<ListMenuType, ListMenuProps>((props: ListMenuProps, re
       { action: 'add', label: t('add_to') },
       { action: 'copyName', label: t('copy_name') },
       { action: 'musicSourceDetail', label: t('music_source_detail') },
-      { action: 'clearUrlCache', label: t('clear_music_url_cache') },
       { action: 'dislike', label: t('dislike'), disabled: isDislikeMusic },
     ] as const
   }, [t, isDislikeMusic])
@@ -80,9 +78,6 @@ export default forwardRef<ListMenuType, ListMenuProps>((props: ListMenuProps, re
       case 'musicSourceDetail':
         props.onMusicSourceDetail(selectInfo)
         // setVIsibleMusicPosition(true)
-        break
-      case 'clearUrlCache':
-        props.onClearUrlCache(selectInfo)
         break
       case 'dislike':
         props.onDislikeMusic(selectInfo)

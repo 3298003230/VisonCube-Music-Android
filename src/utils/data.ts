@@ -1,5 +1,5 @@
 import { getData, saveData, getAllKeys, removeDataMultiple, saveDataMultiple, removeData, getDataMultiple } from '@/plugins/storage'
-import { DEFAULT_SETTING, LIST_IDS, MANAGED_USER_API_ID, storageDataPrefix, type NAV_ID_Type } from '@/config/constant'
+import { DEFAULT_SETTING, LIST_IDS, storageDataPrefix, type NAV_ID_Type } from '@/config/constant'
 import { throttle } from './common'
 // import { gzip, ungzip } from '@/utils/nativeModules/gzip'
 // import { readFile, writeFile, temporaryDirectoryPath, unlink } from '@/utils/fs'
@@ -346,15 +346,6 @@ export const clearMusicUrl = async(keys?: string[]) => {
   if (!keys) keys = (await getAllKeys()).filter(key => key.startsWith(storageDataPrefix.musicUrl))
   await removeDataMultiple(keys)
 }
-/** 清理指定歌曲的 URL 缓存（用于歌曲链接失效后的快速恢复）。 */
-export const clearMusicUrlForMusic = async(musicInfo: LX.Music.MusicInfo | LX.Music.MusicInfo[]) => {
-  const ids = new Set((Array.isArray(musicInfo) ? musicInfo : [musicInfo]).map(info => info.id))
-  const keys = (await getAllKeys()).filter(key => {
-    if (!key.startsWith(storageDataPrefix.musicUrl)) return false
-    return [...ids].some(id => key.startsWith(`${storageDataPrefix.musicUrl}${id}_`))
-  })
-  await clearMusicUrl(keys)
-}
 
 export const getLyric = async(musicInfo: LX.Music.MusicInfo) => getData<LX.Music.LyricInfo>(`${storageDataPrefix.lyric}${musicInfo.id}`).then(lrcInfo => lrcInfo ?? { lyric: '' })
 export const saveLyric = async(musicInfo: LX.Music.MusicInfo, lyricInfo: LX.Music.LyricInfo) => saveData(`${storageDataPrefix.lyric}${musicInfo.id}`, lyricInfo)
@@ -503,7 +494,7 @@ export const removeSyncHostHistory = async(index: number) => {
   await saveData(syncHostHistoryPrefix, syncHostHistory)
 }
 
-let userApis: LX.UserApi.UserApiInfo[] | null = null
+let userApis: LX.UserApi.UserApiInfo[] = []
 export const getUserApiList = async(): Promise<LX.UserApi.UserApiInfo[]> => {
   userApis = await getData<LX.UserApi.UserApiInfo[]>(userApiPrefix) ?? []
 
@@ -522,36 +513,6 @@ export const getUserApiList = async(): Promise<LX.UserApi.UserApiInfo[]> => {
 export const getUserApiScript = async(id: string): Promise<string> => {
   const script = await getData<string>(`${userApiPrefix}${id}`) ?? ''
   return script
-}
-
-export const upsertManagedUserApi = async(script: string, manifest: { name: string, version: string }) => {
-  const result = /^\/\*[\S|\s]+?\*\//.exec(script)
-  if (!result) throw new Error('无效的受管音源文件')
-  if (!userApis) await getUserApiList()
-  const scriptInfo = matchInfo(result[0])
-  const apiInfo: LX.UserApi.UserApiInfo = {
-    id: MANAGED_USER_API_ID,
-    ...scriptInfo,
-    name: manifest.name || scriptInfo.name || 'VisonCube Music Source',
-    version: manifest.version || scriptInfo.version,
-    allowShowUpdateAlert: false,
-  }
-  const index = userApis.findIndex(api => api.id == MANAGED_USER_API_ID)
-  if (index >= 0) userApis.splice(index, 1, apiInfo)
-  else userApis.push(apiInfo)
-  await saveDataMultiple([
-    [userApiPrefix, userApis],
-    [`${userApiPrefix}${MANAGED_USER_API_ID}`, script],
-  ])
-  return apiInfo
-}
-
-export const removeManagedUserApi = async() => {
-  if (!userApis) await getUserApiList()
-  const index = userApis.findIndex(api => api.id == MANAGED_USER_API_ID)
-  if (index >= 0) userApis.splice(index, 1)
-  await saveData(userApiPrefix, userApis)
-  await removeData(`${userApiPrefix}${MANAGED_USER_API_ID}`)
 }
 
 const INFO_NAMES = {

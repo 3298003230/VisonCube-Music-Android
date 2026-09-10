@@ -8,7 +8,6 @@ import Dialog, { type DialogType } from '@/components/common/Dialog'
 import Button from '@/components/common/Button'
 import List from './List'
 import ImportBtn from './ImportBtn'
-import ManagedSourceUpdate from './ManagedSourceUpdate'
 
 // interface UrlInputType {
 //   setText: (text: string) => void
@@ -104,8 +103,10 @@ export default forwardRef<UserApiEditModalType, {}>((props, ref) => {
               {/* <UrlInput ref={inputRef} /> */}
               <Text size={16} style={styles.title}>{t('user_api_title')}</Text>
               <List />
-              <ManagedSourceUpdate />
               <View style={styles.tips}>
+                <Text style={styles.tipsText} size={12}>
+                  {t('user_api_readme')}
+                </Text>
                 <View>
                   <Text style={styles.tipsText} size={12}>{t('user_api_note')}</Text>
                 </View>
@@ -164,5 +165,4 @@ const styles = createStyle({
     marginRight: 15,
   },
 })
-
 

@@ -10,7 +10,7 @@ import { handleFileMusicAction, handleFileJSAction, handleFileLXMCAction } from 
 const handleLinkAction = async(link: string) => {
   // console.log(link)
   const [url, search] = link.split('?')
-  const [type, action, ...paths] = url.replace(/^(?:lxmusic|visoncubemusic):\/\//, '').split('/')
+  const [type, action, ...paths] = url.replace('lxmusic://', '').split('/')
   const params: {
     paths: string[]
     data?: string
@@ -70,7 +70,7 @@ const handleFileAction = async(link: string) => {
 
 
 const runLinkAction = async(link: string) => {
-  if (/^(?:lxmusic|visoncubemusic):\/\//.test(link)) {
+  if (link.startsWith('lxmusic://')) {
     try {
       await handleLinkAction(link)
     } catch (err: any) {

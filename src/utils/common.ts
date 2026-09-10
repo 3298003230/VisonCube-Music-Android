@@ -11,7 +11,7 @@ export const getRandom = (min: number, max: number): number => Math.floor(Math.r
 export const sizeFormate = (size: number): string => {
   // https://gist.github.com/thomseddon/3511330
   if (!size) return '0 B'
-  let units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+  let units = ['B', 'KB', 'MB', 'GB', 'TB']
   let number = Math.floor(Math.log(size) / Math.log(1024))
   return `${(size / Math.pow(1024, Math.floor(number))).toFixed(2)} ${units[number]}`
 }
@@ -69,6 +69,9 @@ export const formatPlayTime2 = (time: number) => {
   let s = Math.trunc(time % 60)
   return numFix(m) + ':' + numFix(s)
 }
+
+
+
 export const isUrl = (path: string) => /https?:\/\//.test(path)
 
 // 解析URL参数为对象

@@ -71,7 +71,7 @@ export const requestStoragePermission = async() => {
       // {
       //   title: '存储读写权限申请',
       //   message:
-      //     'VisonCube Music需要使用存储读写权限才能下载歌曲.',
+      //     'VisonCube Music 需要使用存储读写权限才能下载歌曲。',
       //   buttonNeutral: '一会再问我',
       //   buttonNegative: '取消',
       //   buttonPositive: '确定',

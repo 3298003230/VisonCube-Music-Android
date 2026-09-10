@@ -1,4 +1,4 @@
-import { initSetting } from '@/core/common'
+import { initSetting, showPactModal } from '@/core/common'
 import registerPlaybackService from '@/plugins/player/service'
 import initTheme from './theme'
 import initI18n from './i18n'
@@ -10,6 +10,7 @@ import initCommonState from './common'
 import { initDeeplink } from './deeplink'
 import { setApiSource } from '@/core/apiSource'
 import commonActions from '@/store/common/action'
+import settingState from '@/store/setting/state'
 import { checkUpdate } from '@/core/version'
 import { bootLog } from '@/utils/bootLog'
 import { getCurrentSession } from '@/features/auth/authState'
@@ -17,10 +18,15 @@ import { startMusicCloudSync } from '@/features/musicSync'
 
 let isFirstPush = true
 const handlePushedHomeScreen = async() => {
-  if (isFirstPush) {
-    isFirstPush = false
-    void checkUpdate()
-    void initDeeplink()
+  if (settingState.setting['common.isAgreePact']) {
+    if (isFirstPush) {
+      isFirstPush = false
+      void checkUpdate()
+      void initDeeplink()
+    }
+  } else {
+    if (isFirstPush) isFirstPush = false
+    showPactModal()
   }
 }
 
@@ -42,7 +48,7 @@ export default async() => {
   await initUserApi(setting)
   bootLog('User Api inited.')
 
-  void setApiSource(setting['common.apiSource'])
+  setApiSource(setting['common.apiSource'])
   bootLog('Api inited.')
 
   registerPlaybackService()

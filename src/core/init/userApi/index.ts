@@ -5,7 +5,6 @@ import BackgroundTimer from 'react-native-background-timer'
 import { fetchData } from './request'
 import { getUserApiList } from '@/utils/data'
 import { confirmDialog, openUrl, tipDialog } from '@/utils/tools'
-import { hydrateManagedSource } from '@/features/musicSource/managedSource'
 
 
 export default async(setting: LX.AppSetting) => {
@@ -253,6 +252,5 @@ export default async(setting: LX.AppSetting) => {
     }
   })
 
-  await hydrateManagedSource()
   setUserApiList(await getUserApiList())
 }

@@ -199,9 +199,7 @@ const fetchData = (url, { timeout = 15000, ...options }) => {
         } else {
           try {
             resp.body = JSON.parse(resp.body)
-          } catch {
-            // Keep the original response body when it is not valid JSON.
-          }
+          } catch {}
           return resp
         }
       }).catch(err => {

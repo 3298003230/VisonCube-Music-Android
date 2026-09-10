@@ -122,9 +122,7 @@ const List = forwardRef<ListType, ListProps>(({ onShowMenu, onMuiltSelectMode, o
                 try {
                   flatListRef.current?.scrollToIndex({ index: Math.floor(playerState.playInfo.playIndex / (rowInfo.current.rowNum ?? 1)), viewPosition: 0.3, animated: false })
                   return
-                } catch {
-                  // The item may have been removed before the animation completed.
-                }
+                } catch {}
               }
             }
             flatListRef.current?.scrollToOffset({ offset: position, animated: false })
@@ -155,9 +153,7 @@ const List = forwardRef<ListType, ListProps>(({ onShowMenu, onMuiltSelectMode, o
           else {
             try {
               flatListRef.current?.scrollToIndex({ index: Math.floor(playerState.playInfo.playIndex / (rowInfo.current.rowNum ?? 1)), viewPosition: 0.3, animated: true })
-            } catch {
-              // The item may have been removed before the animation completed.
-            }
+            } catch {}
           }
         }
       })
