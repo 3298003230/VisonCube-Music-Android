@@ -18,7 +18,7 @@ void test('APK installation derives the Provider from the running package and ex
   assert.match(nativeModule, /canRequestPackageInstalls\(\)/)
   assert.match(nativeModule, /Settings\.ACTION_MANAGE_UNKNOWN_APP_SOURCES/)
   assert.match(nativeModule, /"INSTALL_PERMISSION_REQUIRED"/)
-  assert.match(nativeUtils, /installApk = \(filePath: string\): Promise<void> => UtilsModule\.installApk\(filePath\)/)
+  assert.match(nativeUtils, /installApk = async\(filePath: string\): Promise<void> => UtilsModule\.installApk\(filePath\)/)
   assert.match(versionUtils, /await installApk\(apkSavePath\)/)
   assert.doesNotMatch(versionUtils, /APP_PROVIDER_NAME/)
   assert.match(versionModal, /INSTALL_PERMISSION_REQUIRED/)

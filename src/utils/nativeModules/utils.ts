@@ -6,7 +6,7 @@ export const exitApp = UtilsModule.exitApp
 
 export const getSupportedAbis = UtilsModule.getSupportedAbis
 
-export const installApk = (filePath: string): Promise<void> => UtilsModule.installApk(filePath)
+export const installApk = async(filePath: string): Promise<void> => UtilsModule.installApk(filePath)
 
 
 export const screenkeepAwake = () => {
