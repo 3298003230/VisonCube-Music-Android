@@ -514,6 +514,8 @@
   "version_tip_checking": "检查更新中...",
   "version_tip_downloaded": "安装包已经下载完毕。",
   "version_tip_failed": "安装包下载失败，请稍后重试。",
+  "version_tip_install_failed": "无法打开安装程序，请重试。",
+  "version_tip_install_permission": "请允许本应用安装未知应用后，再点击安装重试。",
   "version_tip_latest": "软件已是最新，尽情地体验吧~",
   "version_tip_min": "已切换到后台下载，你可以去「设置 → 软件更新」重新打开本弹窗哦",
   "version_tip_unknown": "更新信息获取失败，请手动检查更新！",

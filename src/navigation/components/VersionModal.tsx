@@ -85,6 +85,7 @@ const VersionModal = ({ componentId }: { componentId: string }) => {
   const [confirmBtn, setConfirmBtn] = useState({ text: '', show: true, disabled: false })
   const [title, setTitle] = useState('')
   const [tip, setTip] = useState('')
+  const [installTip, setInstallTip] = useState('')
 
 
   useEffect(() => {
@@ -151,6 +152,7 @@ const VersionModal = ({ componentId }: { componentId: string }) => {
     }
     ignoreBtnConfig.text = t(ignoreVersion == versionInfo.newVersion?.version ? 'version_btn_ignore_cancel' : 'version_btn_ignore')
     setIgnoreBtn(ignoreBtnConfig)
+    setInstallTip('')
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t, versionInfo, ignoreVersion, progress])
@@ -167,7 +169,13 @@ const VersionModal = ({ componentId }: { componentId: string }) => {
     if (versionInfo.isLatest || versionInfo.isUnknown) {
       void checkUpdate()
     } else if (versionInfo.status == 'downloaded') {
-      void updateApp()
+      setInstallTip('')
+      void updateApp().catch((error: unknown) => {
+        const code = typeof error == 'object' && error != null && 'code' in error && typeof error.code == 'string'
+          ? error.code
+          : ''
+        setInstallTip(t(code == 'INSTALL_PERMISSION_REQUIRED' ? 'version_tip_install_permission' : 'version_tip_install_failed'))
+      })
     } else if (versionInfo.status == 'idle' || versionInfo.status == 'error') {
       downloadUpdate()
     }
@@ -176,7 +184,7 @@ const VersionModal = ({ componentId }: { componentId: string }) => {
   return (
     <ModalContent>
       <Content title={title} newVersionInfo={versionInfo.newVersion} />
-      { tip.length ? <Text style={styles.tip} color={theme['c-primary-font']}>{tip}</Text> : null }
+      { (installTip || tip).length ? <Text style={styles.tip} color={theme['c-primary-font']}>{installTip || tip}</Text> : null }
       <View style={styles.btns}>
         {
           ignoreBtn.show

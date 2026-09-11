@@ -514,6 +514,8 @@
   "version_tip_checking": "Checking for updates...",
   "version_tip_downloaded": "The apk has been downloaded.",
   "version_tip_failed": "The update package download failed. Please try again later.",
+  "version_tip_install_failed": "Unable to open the package installer. Please try again.",
+  "version_tip_install_permission": "Allow installs from this app, then tap Install to retry.",
   "version_tip_latest": "The app is up to date, please enjoy it~",
   "version_tip_min": "The download has been switched to background. You can navigate to \"Settings → Update\" to re-open this pop-up window.",
   "version_tip_unknown": "Update information could not be retrieved. Please check for updates manually.",

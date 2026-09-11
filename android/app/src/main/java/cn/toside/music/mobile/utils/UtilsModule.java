@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
@@ -126,13 +127,29 @@ public class UtilsModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void installApk(String filePath, String fileProviderAuthority, Promise promise) {
+  public void installApk(String filePath, Promise promise) {
     // https://github.com/mikehardy/react-native-update-apk/blob/master/android/src/main/java/net/mikehardy/rnupdateapk/RNUpdateAPK.java
     File file = new File(filePath);
     if (!file.exists()) {
       Log.e("Utils", "installApk: file doe snot exist '" + filePath + "'");
-      // FIXME this should take a promise and fail it
-      promise.reject("Utils", "installApk: file doe snot exist '" + filePath + "'");
+      promise.reject("INSTALL_FILE_NOT_FOUND", "The update package is no longer available.");
+      return;
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+      && !reactContext.getPackageManager().canRequestPackageInstalls()) {
+      try {
+        Intent settingsIntent = new Intent(
+          Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+          Uri.parse("package:" + reactContext.getPackageName())
+        );
+        settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        reactContext.startActivity(settingsIntent);
+        promise.reject("INSTALL_PERMISSION_REQUIRED", "Allow installs from this app, then retry.");
+      } catch (Exception e) {
+        Log.e("Utils", "Unable to open the install permission settings", e);
+        promise.reject("INSTALL_SETTINGS_UNAVAILABLE", "Unable to open install permission settings.", e);
+      }
       return;
     }
 
@@ -140,36 +157,39 @@ public class UtilsModule extends ReactContextBaseJavaModule {
       // API24 and up has a package installer that can handle FileProvider content:// URIs
       Uri contentUri;
       try {
+        String fileProviderAuthority = reactContext.getPackageName() + ".provider";
         contentUri = FileProvider.getUriForFile(getReactApplicationContext(), fileProviderAuthority, file);
       } catch (Exception e) {
-        // FIXME should be a Promise.reject really
-        Log.e("Utils", "installApk exception with authority name '" + fileProviderAuthority + "'", e);
-        promise.reject("Utils", "installApk exception with authority name '" + fileProviderAuthority + "'");
+        Log.e("Utils", "installApk exception while resolving the provider URI", e);
+        promise.reject("INSTALL_PROVIDER_ERROR", "Unable to prepare the update package.", e);
         return;
-        // throw e;
       }
-      Intent installApp = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-      installApp.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-      installApp.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      installApp.setData(contentUri);
-      installApp.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, reactContext.getApplicationInfo().packageName);
-      reactContext.startActivity(installApp);
-      promise.resolve(null);
+      try {
+        Intent installApp = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        installApp.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        installApp.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        installApp.setData(contentUri);
+        installApp.putExtra(Intent.EXTRA_INSTALLER_PACKAGE_NAME, reactContext.getApplicationInfo().packageName);
+        reactContext.startActivity(installApp);
+        promise.resolve(null);
+      } catch (Exception e) {
+        Log.e("Utils", "Unable to start the package installer", e);
+        promise.reject("INSTALL_INTENT_ERROR", "Unable to open the package installer.", e);
+      }
     } else {
       // Old APIs do not handle content:// URIs, so use an old file:// style
       String cmd = "chmod 777 " + file;
       try {
         Runtime.getRuntime().exec(cmd);
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setDataAndType(Uri.parse("file://" + file), "application/vnd.android.package-archive");
+        reactContext.startActivity(intent);
+        promise.resolve(null);
       } catch (Exception e) {
-        // e.printStackTrace();
-        Log.e("Utils", "installApk exception : " + e.getMessage(), e);
-        promise.reject("Utils", e.getMessage());
+        Log.e("Utils", "Unable to start the legacy package installer", e);
+        promise.reject("INSTALL_INTENT_ERROR", "Unable to open the package installer.", e);
       }
-      Intent intent = new Intent(Intent.ACTION_VIEW);
-      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-      intent.setDataAndType(Uri.parse("file://" + file), "application/vnd.android.package-archive");
-      reactContext.startActivity(intent);
-      promise.resolve(null);
     }
   }
 

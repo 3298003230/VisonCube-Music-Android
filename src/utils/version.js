@@ -1,6 +1,5 @@
 import { installApk } from '@/utils/nativeModules/utils'
 import { downloadFile, hash, temporaryDirectoryPath, unlink } from '@/utils/fs'
-import { APP_PROVIDER_NAME } from '@/config/constant'
 
 const noop = () => {}
 let apkSavePath
@@ -52,5 +51,5 @@ export const downloadNewVersion = async(release, onDownload = noop) => {
 
 export const updateApp = async() => {
   if (!apkSavePath) throw new Error('APK file is not ready')
-  await installApk(apkSavePath, APP_PROVIDER_NAME)
+  await installApk(apkSavePath)
 }

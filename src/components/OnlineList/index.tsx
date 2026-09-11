@@ -7,6 +7,7 @@ import ListMusicMultiAdd, { type MusicMultiAddModalType as ListAddMultiType } fr
 import ListMusicAdd, { type MusicAddModalType as ListMusicAddType } from '@/components/MusicAddModal'
 import MultipleModeBar, { type MultipleModeBarType, type SelectMode } from './MultipleModeBar'
 import { handleDislikeMusic, handlePlay, handlePlayLater, handleShare, handleShowMusicSourceDetail } from './listAction'
+import { clearMusicUrlForMusic } from '@/utils/data'
 import { createStyle } from '@/utils/tools'
 
 export interface OnlineListProps {
@@ -77,6 +78,9 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
       listMusicAddRef.current?.show({ musicInfo: info.musicInfo, listId: '', isMove: false })
     }
   }
+  const handleClearUrlCache = async(musicInfos: LX.Music.MusicInfo[]) => {
+    await clearMusicUrlForMusic(musicInfos)
+  }
 
   return (
     <View style={styles.container}>
@@ -110,6 +114,7 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
         onCopyName={info => { handleShare(info.musicInfo) }}
         onAdd={handleAddMusic}
         onMusicSourceDetail={info => { void handleShowMusicSourceDetail(info.musicInfo) }}
+        onClearUrlCache={info => { void handleClearUrlCache(info.selectedList.length ? info.selectedList : [info.musicInfo]) }}
         onDislikeMusic={info => { void handleDislikeMusic(info.musicInfo) }}
       />
       {/* <LoadingMask ref={loadingMaskRef} /> */}

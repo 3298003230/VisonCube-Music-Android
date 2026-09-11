@@ -23,6 +23,7 @@ export interface ListMenuProps {
   onChangePosition: (selectInfo: SelectInfo) => void
   onToggleSource: (selectInfo: SelectInfo) => void
   onMusicSourceDetail: (selectInfo: SelectInfo) => void
+  onClearUrlCache: (selectInfo: SelectInfo) => void
   onDislikeMusic: (selectInfo: SelectInfo) => void
   onRemove: (selectInfo: SelectInfo) => void
 }
@@ -71,6 +72,7 @@ export default forwardRef<ListMenuType, ListMenuProps>((props, ref) => {
       { action: 'toggleSource', label: t('toggle_source') },
       { action: 'copyName', label: t('copy_name') },
       { action: 'musicSourceDetail', disabled: musicInfo.source == 'local', label: t('music_source_detail') },
+      { action: 'clearUrlCache', disabled: musicInfo.source == 'local', label: t('clear_music_url_cache') },
       // { action: 'musicSearch', label: t('music_search') },
       { action: 'dislike', disabled: hasDislike(musicInfo), label: t('dislike') },
       { action: 'remove', label: t('delete') },
@@ -133,6 +135,9 @@ export default forwardRef<ListMenuType, ListMenuProps>((props, ref) => {
       case 'musicSourceDetail':
         props.onMusicSourceDetail(selectInfo)
         // setVIsibleMusicPosition(true)
+        break
+      case 'clearUrlCache':
+        props.onClearUrlCache(selectInfo)
         break
       case 'dislike':
         props.onDislikeMusic(selectInfo)

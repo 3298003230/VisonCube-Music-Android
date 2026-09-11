@@ -514,6 +514,8 @@
   "version_tip_checking": "檢查更新中...",
   "version_tip_downloaded": "安裝包已經下載完畢。",
   "version_tip_failed": "安裝包下載失敗，請稍後再試。",
+  "version_tip_install_failed": "無法開啟安裝程式，請重試。",
+  "version_tip_install_permission": "請允許此應用程式安裝未知應用程式後，再點選安裝重試。",
   "version_tip_latest": "軟體已是最新，盡情地體驗吧~",
   "version_tip_min": "已切換到後台下載，你可以去「設定 → 軟體更新」重新開啟本視窗哦",
   "version_tip_unknown": "更新資訊取得失敗，請手動檢查更新！",

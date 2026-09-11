@@ -121,6 +121,8 @@ jobs:
             badging=$($AAPT dump badging "$apk")
             expected_package="package: name='com.visoncube.music' versionCode='${version_codes[$abi]}' versionName='${PACKAGE_VERSION}'"
             grep -Fq "$expected_package" <<< "$badging" || { echo "Unexpected package metadata for $apk" >&2; exit 1; }
+            manifest=$($AAPT dump xmltree "$apk" AndroidManifest.xml)
+            grep -Fq 'com.visoncube.music.provider' <<< "$manifest" || { echo "Unexpected FileProvider authority for $apk" >&2; exit 1; }
           done
 
           cd "$output_dir"

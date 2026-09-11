@@ -15,6 +15,7 @@ import ListMusicSearch, { type ListMusicSearchType } from './ListMusicSearch'
 import MusicPositionModal, { type MusicPositionModalType } from './MusicPositionModal'
 import MetadataEditModal, { type MetadataEditType, type MetadataEditProps } from '@/components/MetadataEditModal'
 import MusicToggleModal, { type MusicToggleModalType } from './MusicToggleModal'
+import { clearMusicUrlForMusic } from '@/utils/data'
 
 
 export default () => {
@@ -117,6 +118,9 @@ export default () => {
     if (!selectedInfoRef.current || selectedInfoRef.current.musicInfo.source != 'local') return
     handleUpdateMusicInfo(selectedInfoRef.current.listId, selectedInfoRef.current.musicInfo, info)
   }, [])
+  const handleClearUrlCache = useCallback(async(musicInfos: LX.Music.MusicInfo[]) => {
+    await clearMusicUrlForMusic(musicInfos)
+  }, [])
 
 
   return (
@@ -159,6 +163,7 @@ export default () => {
         onDislikeMusic={info => { void handleDislikeMusic(info.musicInfo) }}
         onCopyName={info => { handleShare(info.musicInfo) }}
         onMusicSourceDetail={info => { void handleShowMusicSourceDetail(info.musicInfo) }}
+        onClearUrlCache={info => { void handleClearUrlCache(info.selectedList.length ? info.selectedList : [info.musicInfo]) }}
         onAdd={handleAddMusic}
         onMove={handleMoveMusic}
         onEditMetadata={handleEditMetadata}

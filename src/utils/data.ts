@@ -346,6 +346,15 @@ export const clearMusicUrl = async(keys?: string[]) => {
   if (!keys) keys = (await getAllKeys()).filter(key => key.startsWith(storageDataPrefix.musicUrl))
   await removeDataMultiple(keys)
 }
+/** Clear every cached quality for the selected song or songs without changing the cache key format. */
+export const clearMusicUrlForMusic = async(musicInfo: LX.Music.MusicInfo | LX.Music.MusicInfo[]) => {
+  const ids = new Set((Array.isArray(musicInfo) ? musicInfo : [musicInfo]).map(info => info.id))
+  const keys = (await getAllKeys()).filter(key => {
+    if (!key.startsWith(storageDataPrefix.musicUrl)) return false
+    return [...ids].some(id => key.startsWith(`${storageDataPrefix.musicUrl}${id}_`))
+  })
+  await clearMusicUrl(keys)
+}
 
 export const getLyric = async(musicInfo: LX.Music.MusicInfo) => getData<LX.Music.LyricInfo>(`${storageDataPrefix.lyric}${musicInfo.id}`).then(lrcInfo => lrcInfo ?? { lyric: '' })
 export const saveLyric = async(musicInfo: LX.Music.MusicInfo, lyricInfo: LX.Music.LyricInfo) => saveData(`${storageDataPrefix.lyric}${musicInfo.id}`, lyricInfo)
