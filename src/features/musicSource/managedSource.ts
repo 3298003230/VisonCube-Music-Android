@@ -110,6 +110,24 @@ const loadCache = async(userId: number) => {
   }
 }
 
+const removeCacheFile = async(path: string) => {
+  if (await existsFile(path)) await unlink(path)
+}
+
+export const clearManagedSourceCache = async() => {
+  await Promise.all([
+    removeCacheFile(manifestPath),
+    removeCacheFile(sourcePath),
+    removeCacheFile(sourceTempPath),
+  ])
+}
+
+export const removeManagedSource = async() => {
+  await clearManagedSourceCache()
+  await removeManagedUserApi()
+  setUserApiList(await getUserApiList())
+}
+
 export const hydrateManagedSource = async() => {
   const session = getCurrentSession()
   if (!session) return false

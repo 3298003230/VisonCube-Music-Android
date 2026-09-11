@@ -35,3 +35,18 @@ void test('managed source is routed through the user API playback adapter', asyn
   assert.match(apiSource, /import \{ isUserApiSource \} from '@\/config\/constant'/)
   assert.match(apiSource, /isUserApiSource\(settingState\.setting\['common\.apiSource'\]\)/)
 })
+
+void test('removing the managed source clears its persistent cache', async() => {
+  const [sourceList, managedSource] = await Promise.all([
+    readSource('../src/screens/Home/Views/Setting/settings/Basic/UserApiEditModal/List.tsx'),
+    readSource('../src/features/musicSource/managedSource.ts'),
+  ])
+
+  assert.match(managedSource, /export const clearManagedSourceCache\s*=/)
+  assert.match(managedSource, /export const removeManagedSource\s*=/)
+  assert.match(managedSource, /removeCacheFile\(manifestPath\)/)
+  assert.match(managedSource, /removeCacheFile\(sourcePath\)/)
+  assert.match(managedSource, /await clearManagedSourceCache\(\)/)
+  assert.match(managedSource, /await removeManagedUserApi\(\)/)
+  assert.match(sourceList, /id == MANAGED_USER_API_ID \? removeManagedSource\(\) : removeUserApi\(\[id\]\)/)
+})

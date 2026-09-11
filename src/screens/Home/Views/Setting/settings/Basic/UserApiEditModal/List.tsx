@@ -13,6 +13,7 @@ import { Icon } from '@/components/common/Icon'
 import settingState from '@/store/setting/state'
 import apiSourceInfo from '@/utils/musicSdk/api-source-info'
 import { setApiSource } from '@/core/apiSource'
+import { MANAGED_USER_API_ID, removeManagedSource } from '@/features/musicSource/managedSource'
 
 const formatVersionName = (version: string) => {
   return /^\d/.test(version) ? `v${version}` : version
@@ -87,7 +88,8 @@ export default () => {
       bgClose: false,
     })
     if (!confirm) return
-    void removeUserApi([id]).finally(() => {
+    const removeSource = id == MANAGED_USER_API_ID ? removeManagedSource() : removeUserApi([id])
+    void removeSource.finally(() => {
       if (settingState.setting['common.apiSource'] == id) {
         let backApiId = apiSourceInfo.find(api => !api.disabled)?.id
         if (!backApiId) backApiId = userApiState.list[0]?.id
@@ -161,4 +163,3 @@ const styles = createStyle({
     marginBottom: 15,
   },
 })
-
