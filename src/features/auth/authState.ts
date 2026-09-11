@@ -2,6 +2,11 @@ import * as authApi from './api'
 import { type AuthGateState, type AuthSession, type AuthUser, type PasswordCredentials, type RegisterCredentials } from './models'
 import { clearSession, loadSession, saveSession } from './storage'
 import { stopMusicCloudSync, updateMusicCloudSyncSession } from '@/features/musicSync'
+import { MANAGED_USER_API_ID } from '@/features/musicSource/config'
+import { removeManagedSource } from '@/features/musicSource/storage'
+import { setApiSource } from '@/core/apiSource'
+import settingState from '@/store/setting/state'
+import apiSourceInfo from '@/utils/musicSdk/api-source-info'
 
 let currentSession: AuthSession | null = null
 
@@ -86,10 +91,24 @@ export const confirmEmailBinding = async(email: string, code: string) => {
 export const getCurrentUser = () => currentSession?.user ?? null
 export const getCurrentSession = () => currentSession
 
+const removeManagedSourceForSignOut = async() => {
+  const isManagedSourceActive = settingState.setting['common.apiSource'] == MANAGED_USER_API_ID
+  await removeManagedSource()
+  if (!isManagedSourceActive) return
+
+  const fallback = apiSourceInfo.find(api => !api.disabled)
+  if (fallback) await setApiSource(fallback.id)
+}
+
 export const signOut = async() => {
   const session = currentSession
   currentSession = null
   stopMusicCloudSync()
+  try {
+    await removeManagedSourceForSignOut()
+  } catch {
+    // 音源清理失败不能阻止本地会话退出；下次启动仍会按缓存校验处理失效音源。
+  }
   await clearSession()
   if (!session || !isSessionUsable(session)) return
   try {

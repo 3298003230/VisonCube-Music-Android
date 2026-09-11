@@ -1,14 +1,12 @@
 import { getCurrentSession } from '@/features/auth/authState'
 import { getUserApiList, removeManagedUserApi, upsertManagedUserApi } from '@/utils/data'
-import { existsFile, hash, mkdir, moveFile, privateStorageDirectoryPath, readFile, unlink, writeFile } from '@/utils/fs'
+import { existsFile, hash, mkdir, moveFile, readFile, unlink, writeFile } from '@/utils/fs'
 import { MANAGED_USER_API_ID, MUSIC_SOURCE_MANIFEST_URL, MUSIC_SOURCE_REQUEST_TIMEOUT_MS } from './config'
 import type { ManagedSourceStatus, MusicSourceManifest } from './models'
 import { setUserApiList } from '@/core/userApi'
+import { managedSourcePaths } from './storage'
 
-const sourceDir = `${privateStorageDirectoryPath}/visoncube-music-source`
-const manifestPath = `${sourceDir}/manifest.json`
-const sourcePath = `${sourceDir}/source.js`
-const sourceTempPath = `${sourceDir}/source.tmp`
+const { sourceDir, manifestPath, sourcePath, sourceTempPath } = managedSourcePaths
 
 let status: ManagedSourceStatus = { phase: 'idle' }
 const listeners = new Set<(status: ManagedSourceStatus) => void>()
@@ -110,24 +108,6 @@ const loadCache = async(userId: number) => {
   }
 }
 
-const removeCacheFile = async(path: string) => {
-  if (await existsFile(path)) await unlink(path)
-}
-
-export const clearManagedSourceCache = async() => {
-  await Promise.all([
-    removeCacheFile(manifestPath),
-    removeCacheFile(sourcePath),
-    removeCacheFile(sourceTempPath),
-  ])
-}
-
-export const removeManagedSource = async() => {
-  await clearManagedSourceCache()
-  await removeManagedUserApi()
-  setUserApiList(await getUserApiList())
-}
-
 export const hydrateManagedSource = async() => {
   const session = getCurrentSession()
   if (!session) return false
@@ -159,3 +139,4 @@ export const updateManagedSource = async() => {
 }
 
 export { MANAGED_USER_API_ID }
+export { clearManagedSourceCache, removeManagedSource } from './storage'
