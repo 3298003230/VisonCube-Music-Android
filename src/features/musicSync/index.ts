@@ -6,10 +6,14 @@ import { getData, saveData } from '@/plugins/storage'
 import listState from '@/store/list/state'
 import {
   decidePlaylistChange,
+  getPlaylistSyncIdentity,
   isSamePlaylistSnapshot,
+  isUserPlaylistSyncSource,
+  isValidUserPlaylistSyncId,
   mergeOnlineSongsPreservingLocal,
   normalizeSourceListId,
   playlistKey,
+  shouldKeepPlaylistLocalOnly,
   snapshotFingerprint,
   type PlaylistSnapshot,
 } from './model'
@@ -34,6 +38,7 @@ interface PlaylistPendingOperation {
 interface PlaylistSyncEntry {
   revision: number
   synced: PlaylistSnapshot<LX.Music.MusicInfo>
+  localOnlyAfterRemoteDelete?: boolean
   pending?: PlaylistPendingOperation
   conflict?: {
     remote: authApi.MusicPlaylistRecord
@@ -273,7 +278,8 @@ const toRemotePlaylist = (record: authApi.MusicPlaylistRecord): RemotePlaylist |
     typeof record.source_list_id !== 'string' || !record.source_list_id ||
     typeof record.name !== 'string' || !record.name ||
     !Number.isInteger(record.revision) || record.revision < 1 ||
-    !Array.isArray(record.songs) || record.songs.some(song => !isSyncableMusic(song))
+    !Array.isArray(record.songs) || record.songs.some(song => !isSyncableMusic(song)) ||
+    (isUserPlaylistSyncSource(record.source) && !isValidUserPlaylistSyncId(record.source_list_id))
   ) return null
   return {
     record,
@@ -297,19 +303,25 @@ const getCurrentPlaylists = async(run: SyncRun) => {
   const playlists = new Map<string, LocalPlaylist>()
   const migrations: LX.List.UserListInfo[] = []
   for (const info of [...listState.userList]) {
-    if (!info.source || !info.sourceListId) continue
-    const normalizedId = normalizeSourceListId(info.source, info.sourceListId)
-    if (!normalizedId) continue
-    const key = playlistKey(info.source, normalizedId)
-    if (playlists.has(key)) throw new Error(`检测到重复的来源歌单：${info.name}`)
-    const normalizedInfo = normalizedId === info.sourceListId ? info : { ...info, sourceListId: normalizedId }
+    const identity = getPlaylistSyncIdentity(info)
+    if (!identity) continue
+    const key = playlistKey(identity.source, identity.sourceListId)
+    if (playlists.has(key)) throw new Error(`检测到重复的同步歌单：${info.name}`)
+    const normalizedInfo = !identity.isUserPlaylist && identity.sourceListId !== info.sourceListId
+      ? { ...info, sourceListId: identity.sourceListId }
+      : info
     const songs = (await getListMusics(info.id)).filter(isSyncableMusic)
     if (!isRunActive(run)) return new Map<string, LocalPlaylist>()
+    if (shouldKeepPlaylistLocalOnly(
+      identity.isUserPlaylist,
+      songs.length,
+      run.state.playlists[key]?.localOnlyAfterRemoteDelete,
+    )) continue
     playlists.set(key, {
       info: normalizedInfo,
       snapshot: {
-        source: info.source,
-        sourceListId: normalizedId,
+        source: identity.source,
+        sourceListId: identity.sourceListId,
         name: info.name,
         songs,
         deleted: false,
@@ -323,72 +335,93 @@ const getCurrentPlaylists = async(run: SyncRun) => {
   return playlists
 }
 
-const findPlaylistInfo = (source: string, sourceListId: string) =>
-  listState.userList.find(info =>
+const findPlaylistInfo = (source: string, sourceListId: string) => {
+  if (isUserPlaylistSyncSource(source)) {
+    return listState.userList.find(info => {
+      const identity = getPlaylistSyncIdentity(info)
+      return identity?.isUserPlaylist && identity.sourceListId === sourceListId
+    })
+  }
+  return listState.userList.find(info =>
     info.source === source &&
     Boolean(info.sourceListId) &&
     normalizeSourceListId(source, info.sourceListId!) === sourceListId,
   )
+}
 
-const applyRemotePlaylist = async(run: SyncRun, snapshot: PlaylistSnapshot<LX.Music.MusicInfo>) => {
-  if (!isRunActive(run)) return
+const applyRemotePlaylist = async(run: SyncRun, snapshot: PlaylistSnapshot<LX.Music.MusicInfo>): Promise<boolean> => {
+  if (!isRunActive(run)) return false
   const target = findPlaylistInfo(snapshot.source, snapshot.sourceListId)
+  const isUserPlaylist = isUserPlaylistSyncSource(snapshot.source)
   if (snapshot.deleted) {
-    if (!target) return
+    if (!target) return false
     const current = await getListMusics(target.id)
-    if (!isRunActive(run)) return
+    if (!isRunActive(run)) return false
     const localSongs = current.filter(isLocalMusic)
     if (localSongs.length) {
-      await global.list_event.list_update([{
-        ...target,
-        source: undefined,
-        sourceListId: undefined,
-      }], true)
-      if (!isRunActive(run)) return
+      if (!isUserPlaylist) {
+        await global.list_event.list_update([{
+          ...target,
+          source: undefined,
+          sourceListId: undefined,
+        }], true)
+      }
+      if (!isRunActive(run)) return false
       await global.list_event.list_music_overwrite(target.id, localSongs, true)
+      return isUserPlaylist
     } else {
       await global.list_event.list_remove([target.id], true)
     }
-    return
+    return false
   }
 
   if (!target) {
-    const id = `userlist_cloud_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const id = isUserPlaylist
+      ? snapshot.sourceListId
+      : `userlist_cloud_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    if (listState.userList.some(info => info.id === id)) throw new Error(`云端歌单标识与本地歌单冲突：${snapshot.name}`)
     await global.list_event.list_create(listState.userList.length, [{
       id,
       name: snapshot.name,
-      source: snapshot.source as LX.OnlineSource,
-      sourceListId: snapshot.sourceListId,
+      source: isUserPlaylist ? undefined : snapshot.source as LX.OnlineSource,
+      sourceListId: isUserPlaylist ? undefined : snapshot.sourceListId,
       locationUpdateTime: null,
     }], true)
-    if (!isRunActive(run)) return
+    if (!isRunActive(run)) return false
     await global.list_event.list_music_overwrite(id, snapshot.songs, true)
-    return
+    return false
   }
 
-  if (target.name !== snapshot.name || target.sourceListId !== snapshot.sourceListId) {
+  if (
+    target.name !== snapshot.name ||
+    (!isUserPlaylist && target.sourceListId !== snapshot.sourceListId)
+  ) {
     await global.list_event.list_update([{
       ...target,
       name: snapshot.name,
-      source: snapshot.source as LX.OnlineSource,
-      sourceListId: snapshot.sourceListId,
+      source: isUserPlaylist ? target.source : snapshot.source as LX.OnlineSource,
+      sourceListId: isUserPlaylist ? target.sourceListId : snapshot.sourceListId,
     }], true)
   }
-  if (!isRunActive(run)) return
+  if (!isRunActive(run)) return false
   const current = await getListMusics(target.id)
-  if (!isRunActive(run)) return
+  if (!isRunActive(run)) return false
   const merged = mergeOnlineSongsPreservingLocal(current, snapshot.songs)
   if (JSON.stringify(current) !== JSON.stringify(merged)) {
     await global.list_event.list_music_overwrite(target.id, merged, true)
   }
+  return false
 }
 
 const saveRemotePlaylist = async(run: SyncRun, key: string, remote: RemotePlaylist, applyRemote: boolean) => {
-  if (applyRemote) await applyRemotePlaylist(run, remote.snapshot)
+  const localOnlyAfterRemoteDelete = applyRemote
+    ? await applyRemotePlaylist(run, remote.snapshot)
+    : false
   if (!isRunActive(run)) return
   run.state.playlists[key] = {
     revision: remote.record.revision,
     synced: remote.snapshot,
+    localOnlyAfterRemoteDelete: localOnlyAfterRemoteDelete || undefined,
   }
 }
 
@@ -700,11 +733,14 @@ export const resolveMusicPlaylistConflicts = async(strategy: 'local' | 'remote')
     for (const [key, entry] of conflicts) {
       const remote = entry.conflict ? toRemotePlaylist(entry.conflict.remote) : null
       if (!remote) continue
-      if (strategy === 'remote') await applyRemotePlaylist(run, remote.snapshot)
+      const localOnlyAfterRemoteDelete = strategy === 'remote'
+        ? await applyRemotePlaylist(run, remote.snapshot)
+        : false
       if (!isRunActive(run)) return
       run.state.playlists[key] = {
         revision: remote.record.revision,
         synced: remote.snapshot,
+        localOnlyAfterRemoteDelete: localOnlyAfterRemoteDelete || undefined,
       }
     }
     await persistState(run)
