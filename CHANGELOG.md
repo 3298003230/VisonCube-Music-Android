@@ -1,5 +1,11 @@
 # VisonCube Music Android 更新日志
 
+## 2.13.9
+
+### 更新
+
+- 将账号与应用更新服务切换到 `visoncube.cn` 新域名。
+
 ## 2.13.8
 
 ### 修复

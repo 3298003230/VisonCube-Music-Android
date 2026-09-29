@@ -167,4 +167,3 @@ const styles = createStyle({
     marginRight: 15,
   },
 })
-

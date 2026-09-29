@@ -402,4 +402,3 @@ public class UtilsModule extends ReactContextBaseJavaModule {
     }).start();
   }
 }
-
