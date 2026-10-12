@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import { stripTypeScriptTypes } from 'node:module'
 import test from 'node:test'
+import { runInNewContext } from 'node:vm'
 
 const readSource = (path: string) => readFile(new URL(path, import.meta.url), 'utf8')
 
@@ -40,11 +42,10 @@ void test('managed source is routed through the user API playback adapter', asyn
 })
 
 void test('removing the managed source clears its persistent cache', async() => {
-  const [sourceList, managedSource, managedSourceStorage, authState] = await Promise.all([
+  const [sourceList, managedSource, managedSourceStorage] = await Promise.all([
     readSource('../src/screens/Home/Views/Setting/settings/Basic/UserApiEditModal/List.tsx'),
     readSource('../src/features/musicSource/managedSource.ts'),
     readSource('../src/features/musicSource/storage.ts'),
-    readSource('../src/features/auth/authState.ts'),
   ])
 
   assert.match(managedSource, /export \{ clearManagedSourceCache, removeManagedSource \} from '\.\/storage'/)
@@ -54,6 +55,32 @@ void test('removing the managed source clears its persistent cache', async() => 
   assert.match(managedSourceStorage, /await clearManagedSourceCache\(\)/)
   assert.match(managedSourceStorage, /await removeManagedUserApi\(\)/)
   assert.match(sourceList, /id == MANAGED_USER_API_ID \? removeManagedSource\(\) : removeUserApi\(\[id\]\)/)
-  assert.match(authState, /await removeManagedSourceForSignOut\(\)/)
-  assert.match(authState, /await setApiSource\(fallback\.id\)/)
+})
+
+void test('signing out clears authentication and stops sync without deleting or switching sources', async() => {
+  const source = stripTypeScriptTypes(await readSource('../src/features/auth/authState.ts'))
+    .replace(/^import .*\r?\n/gm, '').replace(/^export /gm, '')
+  const validSession = { token: 'test-token', user: { username: 'test-user' } }
+  for (const session of [null, validSession, { ...validSession, expires_at_ms: 1 }]) {
+    for (const logoutFails of [false, true]) {
+      const calls: string[] = []
+      const api = runInNewContext(source + '\n({ restoreSession, signOut, getCurrentSession })', {
+        loadSession: async() => session,
+        clearSession: async() => { calls.push('session-clear') }, stopMusicCloudSync: () => calls.push('sync-stop'),
+        authApi: { logout: async() => { calls.push('logout'); if (logoutFails) throw new Error('fixture logout failure') } },
+        MANAGED_USER_API_ID: 'managed-test', settingState: { setting: { 'common.apiSource': 'managed-test' } },
+        apiSourceInfo: [{ id: 'fallback' }],
+        removeManagedSource: async() => { calls.push('source-remove') },
+        setApiSource: async() => { calls.push('source-switch') },
+      })
+      await api.restoreSession()
+      calls.length = 0
+      await api.signOut()
+      assert.equal(api.getCurrentSession(), null)
+      assert.deepEqual(calls, ['sync-stop', 'session-clear', ...(session && !('expires_at_ms' in session) ? ['logout'] : [])])
+      calls.length = 0
+      await api.signOut()
+      assert.deepEqual(calls, ['sync-stop', 'session-clear'])
+    }
+  }
 })
