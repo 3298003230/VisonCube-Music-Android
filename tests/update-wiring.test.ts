@@ -42,3 +42,35 @@ void test('both Music protocols and the per-song URL cache clear entry remain wi
     assert.match(source, /clearUrlCache|onClearUrlCache/)
   }
 })
+
+void test('stable upstream playlist, lyric and source fixes remain wired', async() => {
+  const [common, publishUtils, kg, tx, lyric, qrc, search, pic, songId, mgLyric] = await Promise.all([
+    readSource('../src/utils/common.ts'),
+    readSource('../publish/utils/index.js'),
+    readSource('../src/utils/musicSdk/kg/songList.js'),
+    readSource('../src/utils/musicSdk/tx/songList.js'),
+    readSource('../src/utils/musicSdk/tx/lyric.js'),
+    readSource('../src/utils/musicSdk/tx/qrcDecode.js'),
+    readSource('../src/utils/musicSdk/tx/musicSearch.js'),
+    readSource('../src/utils/musicSdk/mg/pic.js'),
+    readSource('../src/utils/musicSdk/mg/songId.js'),
+    readSource('../src/utils/musicSdk/mg/lyric.js'),
+  ])
+
+  for (const source of [common, publishUtils]) {
+    assert.match(source, /KiB/)
+    assert.match(source, /MiB/)
+    assert.match(source, /GiB/)
+    assert.match(source, /TiB/)
+  }
+  assert.match(kg, /getListDetailByGcidChain/)
+  assert.match(tx, /name: '推荐'/)
+  assert.match(tx, /getRecommendList\(page\)/)
+  assert.match(lyric, /decodeQrc/)
+  assert.match(qrc, /export const decodeQrc/)
+  assert.match(search, /DoSearchForQQMusicDesktop/)
+  assert.match(search, /getSearchId\(\)/)
+  assert.match(pic, /getMusicInfo\(songInfo\.songmid\)/)
+  assert.match(songId, /getMusicInfo\(mInfo\.songmid\)/)
+  assert.match(mgLyric, /getMusicInfo\(songInfo\.songmid\)/)
+})

@@ -4,34 +4,19 @@
     android:height="108dp"
     android:viewportWidth="1024"
     android:viewportHeight="1024">
-    <!-- Keep the logo inside the adaptive-icon safe zone and optically center
-         the open C shape, whose geometric bounds are left-heavy by design. -->
+    <!-- Deep Music mark, scaled into the adaptive-icon safe zone. -->
     <group
         android:pivotX="512"
         android:pivotY="512"
-        android:scaleX="0.972"
-        android:scaleY="0.972"
-        android:translateX="36">
+        android:scaleX="0.82"
+        android:scaleY="0.82"
+        android:translateX="112"
+        android:translateY="125">
         <path
-            android:fillColor="@android:color/transparent"
-            android:pathData="M733,345C680,285 603,248 512,248C349,248 218,366 218,512C218,658 349,776 512,776C603,776 680,739 733,679"
-            android:strokeColor="#142B4A"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round"
-            android:strokeWidth="76" />
+            android:pathData="M192,224 C168,192 168,160 200,144 C240,112 288,136 312,184 L488,528 L648,208 C680,144 728,136 776,176 C808,200 816,240 792,288 L560,712 C520,784 456,800 408,728Z"
+            android:fillColor="#B471F5" />
         <path
-            android:fillColor="@android:color/transparent"
-            android:pathData="M669,389C628,351 573,328 512,328C393,328 298,410 298,512C298,614 393,696 512,696C573,696 628,673 669,635"
-            android:strokeColor="#335775"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round"
-            android:strokeWidth="16" />
-        <path
-            android:fillColor="@android:color/transparent"
-            android:pathData="M389,415L510,653L643,415"
-            android:strokeColor="#18A99A"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round"
-            android:strokeWidth="70" />
+            android:pathData="M824,392 L824,600 C824,664 800,696 744,728 L568,832 L496,696 L640,616 C672,600 688,576 688,536 L688,392Z"
+            android:fillColor="#F4FBFF" />
     </group>
 </vector>
