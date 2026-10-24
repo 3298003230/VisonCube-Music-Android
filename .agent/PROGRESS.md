@@ -5,6 +5,7 @@
 - 按已核对的稳定上游版本同步酷狗分享链歌单回退、QQ 音乐推荐歌单和容量单位修复；保留账号、同步、托管音源、退出登录保留音源、品牌资源和缓存清理。
 - Android 增加腾讯 QRC 歌词解码、QQ 搜索、MG 图片/歌曲 ID/歌词兼容修复；版本更新为 2.13.10、versionCode=92，新增对应静态回归测试和变更记录。
 - 已创建前置备份 backups/music-upstream-sync-20261024；本轮尚未完成本机完整 lint/build，待测试通过后使用临时 Git 工作区普通推送 main，不创建 Release、不更新 COS 或服务器。
+- 最终提交为 07f810a（同步修复）和 8895a2c（lint 修复），已普通推送 Android main；CI run 40112613099 成功，包含同步测试、零警告项目 lint、JavaScript bundle 和 Debug APK 构建。日志仅保留第三方 Java 弃用注解和 Runner Node 20 迁移提示。
 
 ## 2026-09-29 Android 2.13.9 正式发布
 
