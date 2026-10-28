@@ -26,13 +26,14 @@ void test('APK installation derives the Provider from the running package and ex
 })
 
 void test('both Music protocols and the per-song URL cache clear entry remain wired', async() => {
-  const [deeplink, data, onlineMenu, onlineList, localMenu, localList] = await Promise.all([
+  const [deeplink, data, onlineMenu, onlineList, localMenu, localList, launcher] = await Promise.all([
     readSource('../src/core/init/deeplink/index.ts'),
     readSource('../src/utils/data.ts'),
     readSource('../src/components/OnlineList/ListMenu.tsx'),
     readSource('../src/components/OnlineList/index.tsx'),
     readSource('../src/screens/Home/Views/Mylist/MusicList/ListMenu.tsx'),
     readSource('../src/screens/Home/Views/Mylist/MusicList/index.tsx'),
+    readSource('../android/app/src/main/res/drawable/ic_launcher_foreground.xml'),
   ])
 
   assert.match(deeplink, /\^\(\?:lxmusic\|visoncubemusic\)/)
@@ -41,6 +42,9 @@ void test('both Music protocols and the per-song URL cache clear entry remain wi
   for (const source of [onlineMenu, onlineList, localMenu, localList]) {
     assert.match(source, /clearUrlCache|onClearUrlCache/)
   }
+  assert.match(launcher, /android:scaleX="0\.82"/)
+  assert.match(launcher, /android:scaleY="0\.82"/)
+  assert.doesNotMatch(launcher, /android:translate[XY]=/)
 })
 
 void test('stable upstream playlist, lyric and source fixes remain wired', async() => {

@@ -1,6 +1,11 @@
 # 当前有效决策
 
-- Android 正式版本为 `2.13.9 / 91`；认证与更新使用 `linux.visoncube.cn`，公开安装包使用 `download.visoncube.cn`。
+## 2026-10-27 启动器图标几何
+
+- Android 启动器继续使用既有深色 Music V/J 方案；自适应前景只保留居中缩放，不增加平台相关平移，避免不同启动器遮罩下出现偏移或裁剪。
+- 包名、签名、背景颜色、密度资源目录和应用业务逻辑保持兼容。
+
+- Android 正式版本为 `2.13.10 / 92`；认证与更新使用 `linux.visoncube.cn`，公开安装包使用 `download.visoncube.cn`。
 - universal APK 是生产更新接口的默认资产；ABI 包作为兼容产物保留，不改变包名和签名身份。
 - 候选构建由 GitHub Actions 完成，生产 COS 和服务器清单保持人工门禁；历史对象和旧域名保留兼容。
 - 不为发布改变账号、同步协议、播放、音源或安装 Provider 行为。

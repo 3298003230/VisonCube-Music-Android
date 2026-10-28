@@ -4,14 +4,12 @@
     android:height="108dp"
     android:viewportWidth="1024"
     android:viewportHeight="1024">
-    <!-- Deep Music mark, scaled into the adaptive-icon safe zone. -->
+    <!-- Deep Music mark, centered inside the adaptive-icon safe zone. -->
     <group
         android:pivotX="512"
         android:pivotY="512"
         android:scaleX="0.82"
-        android:scaleY="0.82"
-        android:translateX="112"
-        android:translateY="125">
+        android:scaleY="0.82">
         <path
             android:pathData="M192,224 C168,192 168,160 200,144 C240,112 288,136 312,184 L488,528 L648,208 C680,144 728,136 776,176 C808,200 816,240 792,288 L560,712 C520,784 456,800 408,728Z"
             android:fillColor="#B471F5" />
